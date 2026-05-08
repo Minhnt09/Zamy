@@ -1,84 +1,89 @@
 <div class="p-8 bg-gray-100 min-h-screen">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Admin Product Manager</h1>
 
-  <h1 class="text-3xl font-bold mb-6">Admin Product Manager</h1>
-
-  <!-- Add product -->
-  <div class="bg-white shadow-md rounded-lg p-6 mb-8">
-
-    <h2 class="text-xl font-semibold mb-4">Add Product</h2>
-
-    <div class="grid grid-cols-4 gap-4">
-
-      <input
-        class="border p-2 rounded"
-        [(ngModel)]="newProduct.name"
-        placeholder="Product name"
-      />
-
-      <input
-        class="border p-2 rounded"
-        [(ngModel)]="newProduct.price"
-        placeholder="Price"
-      />
-
-      <input
-        class="border p-2 rounded"
-        [(ngModel)]="newProduct.image"
-        placeholder="Image URL"
-      />
-
-      <button
-        (click)="addProduct()"
-        class="bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Add
-      </button>
-
-    </div>
-
+    <button
+      class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900"
+      (click)="logout()"
+    >
+      Logout
+    </button>
   </div>
 
-  <!-- Product table -->
+  <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+    <h2 class="text-xl font-semibold mb-4">
+      {{ editingId ? 'Edit Product' : 'Add Product' }}
+    </h2>
+
+    <div class="grid grid-cols-4 gap-4">
+      <input class="border p-2 rounded" [(ngModel)]="newProduct.name" placeholder="Product name" />
+      <input class="border p-2 rounded" [(ngModel)]="newProduct.image" placeholder="Image URL" />
+      <input class="border p-2 rounded" type="number" [(ngModel)]="newProduct.price" placeholder="Price" />
+      <input class="border p-2 rounded" [(ngModel)]="newProduct.code" placeholder="Code" />
+
+      <input class="border p-2 rounded" [(ngModel)]="newProduct.color" placeholder="Color" />
+      <input class="border p-2 rounded" [(ngModel)]="newProduct.size" placeholder="Size" />
+      <input class="border p-2 rounded" type="number" [(ngModel)]="newProduct.stock" placeholder="Stock" />
+
+      <button
+        (click)="submitProduct()"
+        class="bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        {{ editingId ? 'Update' : 'Add' }}
+      </button>
+
+      <button
+        *ngIf="editingId"
+        (click)="cancelEdit()"
+        class="bg-gray-500 text-white rounded hover:bg-gray-600"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
 
   <div class="bg-white shadow-md rounded-lg overflow-hidden">
-
     <table class="w-full">
-
       <thead class="bg-gray-200">
-
         <tr class="text-left">
           <th class="p-3">ID</th>
           <th class="p-3">Image</th>
           <th class="p-3">Name</th>
           <th class="p-3">Price</th>
+          <th class="p-3">Code</th>
+          <th class="p-3">Color</th>
+          <th class="p-3">Size</th>
+          <th class="p-3">Stock</th>
           <th class="p-3">Action</th>
         </tr>
-
       </thead>
 
       <tbody>
-
-        <tr
-          *ngFor="let p of products"
-          class="border-t hover:bg-gray-50"
-        >
-
-          <td class="p-3">{{p.id}}</td>
+        <tr *ngFor="let p of products" class="border-t hover:bg-gray-50">
+          <td class="p-3">{{ p.id }}</td>
 
           <td class="p-3">
-            <img
-              [src]="p.image"
-              class="w-14 h-14 object-cover rounded"
-            />
+            <img [src]="p.image" class="w-14 h-14 object-cover rounded" />
           </td>
 
-          <td class="p-3 font-medium">{{p.name}}</td>
+          <td class="p-3 font-medium">{{ p.name }}</td>
 
           <td class="p-3 text-green-600 font-semibold">
-            {{p.price}} đ
+            {{ p.price }} đ
           </td>
 
-          <td class="p-3">
+          <td class="p-3">{{ p.code }}</td>
+          <td class="p-3">{{ p.color }}</td>
+          <td class="p-3">{{ p.size }}</td>
+          <td class="p-3">{{ p.stock }}</td>
+
+          <td class="p-3 flex gap-2">
+            <button
+              (click)="editProduct(p)"
+              class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+            >
+              Edit
+            </button>
 
             <button
               (click)="deleteProduct(p.id)"
@@ -86,15 +91,9 @@
             >
               Delete
             </button>
-
           </td>
-
         </tr>
-
       </tbody>
-
     </table>
-
   </div>
-
 </div>

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const authRoutes = require('./routes/auth.routes');
 
 const routes = require("./routes");
 // const notFound = require("./middlewares/notFound");
@@ -14,6 +15,7 @@ app.get('/', (req, res) => {
     res.json({ message: 'Backend is running 🚀' });
 });
 
+app.use('/auth', authRoutes);
 app.use('/', routes);
 
 // app.use(notFound);

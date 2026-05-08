@@ -18,6 +18,8 @@ import { PaymentSuccessComponent } from './features/payment-success/payment-succ
 import { ShippingPolicyComponent } from './features/shipping-policy/shipping-policy.component';
 import { SizeGuideComponent } from './features/size-guide/size-guide.component';
 import { ProductsAdminComponent } from './features/admin/products-admin/products-admin.component';
+import { LoginAdminComponent } from './features/admin/login-admin/login-admin.component';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -31,7 +33,12 @@ export const routes: Routes = [
   },
   {
     path: 'admin/products',
-    component: ProductsAdminComponent
+    component: ProductsAdminComponent,
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'admin/login',
+    component: LoginAdminComponent
   },
   {
     path: 'sale',
@@ -100,6 +107,5 @@ export const routes: Routes = [
   {
     path: 'size-guide',
     component: SizeGuideComponent
-  }
-
+  },
 ];

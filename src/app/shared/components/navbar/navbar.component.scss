@@ -1,3 +1,15 @@
+.nav-item {
+  @apply relative text-[26px] font-semibold cursor-pointer;
+}
 
+.nav-item::after {
+  content: "";
+  @apply absolute left-0 -bottom-1 w-0 h-[2px] bg-[#8A5252]
+         transition-all duration-300;
+}
+
+.nav-item:hover::after {
+  @apply w-full;
+}
 
 
