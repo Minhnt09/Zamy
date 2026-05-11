@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login-admin',
@@ -14,7 +15,8 @@ export class LoginAdminComponent {
   email = '';
   password = '';
 
-  loginApi = 'http://localhost:3000/auth/admin/login';
+  // loginApi = 'http://localhost:3000/auth/admin/login';
+  loginApi = `${environment.apiUrl}/auth/admin/login`;
 
   constructor(private http: HttpClient, private router: Router) {}
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-products-admin',
@@ -15,7 +16,7 @@ export class ProductsAdminComponent implements OnInit {
   products:any[]=[];
 
   // api="https://my-app-uc3a.onrender.com/api/products";
-  api="http://localhost:3000/products";
+  api = `${environment.apiUrl}/products`;
 
   editingId: number | null = null;
 
