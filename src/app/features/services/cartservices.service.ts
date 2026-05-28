@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { AuthService, AuthUser } from './auth.service';
 
 export interface CartItem {
   id: string | number;
@@ -11,8 +12,10 @@ export interface CartItem {
 
 @Injectable({ providedIn: 'root' })
 export class CartservicesService {
-  private storageKey = 'cart';
+  private readonly guestCartKey = 'cart';
   private cart: CartItem[] = [];
+  private activeCartKey = this.guestCartKey;
+  private activeUserId: number | null = null;
 
   // BehaviorSubject để đồng bộ toàn app
   private _cart$ = new BehaviorSubject<CartItem[]>([]);
@@ -22,15 +25,35 @@ export class CartservicesService {
   private favorites: any[] = [];
   private favKey = 'favorites';
 
-  constructor() {
+  constructor(private authService: AuthService) {
+    const currentUser = this.authService.getCurrentUser();
+    this.activeUserId = currentUser?.id ?? null;
+    this.activeCartKey = this.getCartStorageKey(currentUser);
     this.loadFromStorage();
+
+    if (currentUser) {
+      this.attachCartToCurrentUser();
+    }
+
+    this.authService.currentUser$.subscribe(user => {
+      const nextUserId = user?.id ?? null;
+
+      if (nextUserId === this.activeUserId) {
+        return;
+      }
+
+      const previousUserId = this.activeUserId;
+      this.activeUserId = nextUserId;
+      this.activeCartKey = this.getCartStorageKey(user);
+      this.loadCartForUser(user, previousUserId === null && nextUserId !== null);
+    });
   }
 
   // ---------- Persistence ----------
   private loadFromStorage() {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
-      const cartJson = localStorage.getItem(this.storageKey);
+      const cartJson = localStorage.getItem(this.activeCartKey);
       const favJson = localStorage.getItem(this.favKey);
       this.cart = cartJson ? JSON.parse(cartJson) : [];
       this.favorites = favJson ? JSON.parse(favJson) : [];
@@ -45,7 +68,7 @@ export class CartservicesService {
   private saveCartToStorage() {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.cart));
+      localStorage.setItem(this.activeCartKey, JSON.stringify(this.cart));
     } catch (e) {
       console.warn('Không thể lưu cart lên localStorage:', e);
     }
@@ -61,7 +84,73 @@ export class CartservicesService {
     }
   }
 
+  private getCartStorageKey(user: AuthUser | null) {
+    return user?.id != null ? `cart:user:${user.id}` : this.guestCartKey;
+  }
+
+  private loadCartForUser(user: AuthUser | null, shouldMergeGuestCart: boolean) {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      this.cart = [];
+      this._cart$.next([]);
+      return;
+    }
+
+    try {
+      const userCartJson = localStorage.getItem(this.activeCartKey);
+      let nextCart: CartItem[] = userCartJson ? JSON.parse(userCartJson) : [];
+
+      if (user && shouldMergeGuestCart) {
+        const guestCartJson = localStorage.getItem(this.guestCartKey);
+        const guestCart: CartItem[] = guestCartJson ? JSON.parse(guestCartJson) : [];
+        nextCart = this.mergeCartItems(nextCart, guestCart);
+        localStorage.setItem(this.activeCartKey, JSON.stringify(nextCart));
+        localStorage.removeItem(this.guestCartKey);
+      }
+
+      this.cart = nextCart;
+    } catch (e) {
+      console.warn('Unable to read cart from localStorage:', e);
+      this.cart = [];
+    }
+
+    this._cart$.next([...this.cart]);
+  }
+
+  private mergeCartItems(baseCart: CartItem[], incomingCart: CartItem[]) {
+    const merged = [...baseCart];
+
+    incomingCart.forEach(item => {
+      if (!item || item.id == null) return;
+
+      const idx = merged.findIndex(cartItem => cartItem.id === item.id);
+      const qty = item.qty && item.qty > 0 ? item.qty : 1;
+
+      if (idx === -1) {
+        merged.push({ ...item, qty });
+      } else {
+        merged[idx] = {
+          ...merged[idx],
+          qty: (merged[idx].qty || 1) + qty,
+        };
+      }
+    });
+
+    return merged;
+  }
+
   // ---------- CART API ----------
+  attachCartToCurrentUser() {
+    const user = this.authService.getCurrentUser();
+
+    if (!user) {
+      return;
+    }
+
+    this.activeUserId = user.id;
+    this.activeCartKey = this.getCartStorageKey(user);
+    this.loadCartForUser(user, true);
+  }
+
   getCartItems(): CartItem[] {
     // trả về copy để tránh thay đổi trực tiếp từ component
     return [...this.cart];

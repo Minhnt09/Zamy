@@ -21,7 +21,12 @@
 
           <!-- Select All -->
           <div class="flex items-center gap-3 mb-4 md:mb-5 text-[#8A5252] font-medium text-[14px] md:text-[16px]">
-              <input type="checkbox" class="w-4 h-4 md:w-5 md:h-5 accent-[#8A5252]" />
+              <input
+                type="checkbox"
+                class="w-4 h-4 md:w-5 md:h-5 accent-[#8A5252]"
+                [checked]="isAllSelected()"
+                (change)="toggleAll($event)"
+              />
               <span>Chọn tất cả sản phẩm</span>
           </div>
 
@@ -44,7 +49,12 @@
               <!-- MOBILE LAYOUT -->
               <div class="md:hidden flex gap-3">
                   <!-- Checkbox -->
-                  <input type="checkbox" class="w-4 h-4 accent-[#8A5252] mt-1 flex-shrink-0" />
+                  <input
+                    type="checkbox"
+                    class="w-4 h-4 accent-[#8A5252] mt-1 flex-shrink-0"
+                    [checked]="isSelected(product)"
+                    (change)="toggleProduct(product, $event)"
+                  />
 
                   <!-- Image -->
                   <img 
@@ -89,7 +99,12 @@
               <!-- DESKTOP LAYOUT -->
               <div class="hidden md:grid grid-cols-12 items-center gap-4">
                   <!-- Checkbox -->
-                  <input type="checkbox" class="col-span-1 w-5 h-5 accent-[#8A5252]" />
+                  <input
+                    type="checkbox"
+                    class="col-span-1 w-5 h-5 accent-[#8A5252]"
+                    [checked]="isSelected(product)"
+                    (change)="toggleProduct(product, $event)"
+                  />
 
                   <!-- Image -->
                   <div class="col-span-3">
@@ -143,7 +158,11 @@
           </h2>
 
           <!-- Items summary -->
-          <div *ngFor="let item of cart" class="flex justify-between text-[14px] md:text-[16px] text-[#8A5252] gap-2">
+          <p *ngIf="selectedCartItems.length === 0" class="text-[14px] md:text-[16px] text-[#8A5252]">
+              Chọn sản phẩm để xem đơn hàng
+          </p>
+
+          <div *ngFor="let item of selectedCartItems" class="flex justify-between text-[14px] md:text-[16px] text-[#8A5252] gap-2">
               <span class="truncate max-w-[120px] md:max-w-[160px]">{{ item.name }}</span>
               <span class="flex-shrink-0">x{{ item.qty }}</span>
               <span class="flex-shrink-0 font-medium">{{ (item.price * (item.qty || 1)) | number }} đ</span>

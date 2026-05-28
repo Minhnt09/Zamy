@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { CartservicesService } from '../services/cartservices.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { FooterComponent } from "../../shared/components/footer/footer.component";
+import { CheckoutService } from '../services/checkout.service';
 
 @Component({
   selector: 'app-shopping-cart',
@@ -16,11 +17,13 @@ import { FooterComponent } from "../../shared/components/footer/footer.component
 export class ShoppingCartComponent implements OnInit, OnDestroy {
   cart: any[] = [];
   product: any;
+  selectedProductIds = new Set<string | number>();
+  selectedCartItems: any[] = [];
   private sub?: Subscription;
 
   constructor(
     private cartService: CartservicesService,
-    private location: Location,
+    private checkoutService: CheckoutService,
     private router: Router
   ) { }
 
@@ -33,6 +36,7 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
           if (typeof item.qty !== 'number' || item.qty < 1) item.qty = 1;
           return item;
         }) : [];
+        this.syncSelectedProducts();
       });
     } else {
       // fallback: lấy một lần từ getCartItems()
@@ -40,6 +44,7 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
       this.cart.forEach(item => {
         if (typeof item.qty !== 'number' || item.qty < 1) item.qty = 1;
       });
+      this.syncSelectedProducts();
     }
     console.log(this.cart);
   }
@@ -53,7 +58,54 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
   }
 
   goBuy(){
+    const selectedItems = this.selectedCartItems;
+
+    if (selectedItems.length === 0) {
+      alert('Vui lòng chọn sản phẩm cần đặt hàng');
+      return;
+    }
+
+    this.checkoutService.setProducts(selectedItems);
     this.router.navigate(['/products-detail']);
+  }
+
+  isSelected(product: any) {
+    return product?.id != null && this.selectedProductIds.has(product.id);
+  }
+
+  isAllSelected() {
+    return this.cart.length > 0 && this.cart.every(item => this.isSelected(item));
+  }
+
+  toggleProduct(product: any, event: Event) {
+    if (!product || product.id == null) return;
+
+    const checked = (event.target as HTMLInputElement).checked;
+
+    if (checked) {
+      this.selectedProductIds.add(product.id);
+    } else {
+      this.selectedProductIds.delete(product.id);
+    }
+
+    this.updateSelectedCartItems();
+  }
+
+  toggleAll(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+
+    if (checked) {
+      this.cart.forEach(item => {
+        if (item?.id != null) {
+          this.selectedProductIds.add(item.id);
+        }
+      });
+      this.updateSelectedCartItems();
+      return;
+    }
+
+    this.selectedProductIds.clear();
+    this.updateSelectedCartItems();
   }
 
   /**
@@ -64,14 +116,16 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
   removeItem(index: number) {
     if (index < 0 || index >= this.cart.length) return;
     const item = this.cart[index];
+    if (item?.id != null) {
+      this.selectedProductIds.delete(item.id);
+    }
     const svc: any = this.cartService as any;
 
     // 1) Prefer id-based removal if item has id and service supports it
     if (item && item.id != null) {
       if (typeof svc.removeItemById === 'function') {
         try {
-          const ok = svc.removeItemById(item.id);
-          // some implementations return boolean, others may not; either way we return
+          svc.removeItemById(item.id);
           return;
         } catch (e) {
           // ignore and try next
@@ -148,11 +202,27 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
    * Compute total (considering qty)
    */
   getTotalPrice() {
-    return this.cart.reduce((sum: number, item: any) => {
+    return this.selectedCartItems.reduce((sum: number, item: any) => {
       const qty = item.qty && item.qty > 0 ? item.qty : 1;
       const price = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
       return sum + price * qty;
     }, 0);
+  }
+
+  private syncSelectedProducts() {
+    const availableIds = new Set(this.cart.map(item => item?.id).filter(id => id != null));
+
+    this.selectedProductIds.forEach(id => {
+      if (!availableIds.has(id)) {
+        this.selectedProductIds.delete(id);
+      }
+    });
+
+    this.updateSelectedCartItems();
+  }
+
+  private updateSelectedCartItems() {
+    this.selectedCartItems = this.cart.filter(item => this.isSelected(item));
   }
 
   /**

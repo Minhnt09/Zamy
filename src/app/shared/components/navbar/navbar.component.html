@@ -22,10 +22,23 @@
       <img (click)="goCart()" src="/assets/icon/giohang.png" class="w-[36px] cursor-pointer">
       <img src="/assets/icon/thongbao1.png" class="w-[34px] cursor-pointer">
 
-      <img (click)="openLogin()" src="/assets/icon/user1.png" class="w-[36px] cursor-pointer">
+      <img (click)="openSearch()" src="/assets/icon/timkiem3.png" class="w-[28px] cursor-pointer">
+
+      <button
+        *ngIf="currentUser; else guestLogin"
+        type="button"
+        class="flex items-center gap-2 text-[#8A5252] font-medium"
+        (click)="logout()"
+      >
+        <span class="max-w-[120px] truncate">{{ currentUser.name }}</span>
+        <span class="text-sm">(Thoát)</span>
+      </button>
+
+      <ng-template #guestLogin>
+        <img (click)="openLogin()" src="/assets/icon/user1.png" class="w-[36px] cursor-pointer">
+      </ng-template>
       <app-login-popup *ngIf="showLogin" (closePopup)="closeLogin()"></app-login-popup>
 
-      <img (click)="openSearch()" src="/assets/icon/timkiem3.png" class="w-[28px] cursor-pointer">
       <app-search-popup
         *ngIf="isSearchOpen"
         [isSearchOpen]="isSearchOpen"
@@ -72,6 +85,17 @@
     <img (click)="goFavorite()" src="/assets/icon/heart1.png" class="w-[28px]">
     <img (click)="goCart()" src="/assets/icon/giohang.png" class="w-[28px]">
     <img (click)="openSearch()" src="/assets/icon/timkiem3.png" class="w-[26px]">
-    <img (click)="openLogin()" src="/assets/icon/user1.png" class="w-[28px]">
+    <button
+      *ngIf="currentUser; else mobileGuestLogin"
+      type="button"
+      class="text-[#8A5252] text-sm font-medium"
+      (click)="logout()"
+    >
+      {{ currentUser.name }} (Thoát)
+    </button>
+
+    <ng-template #mobileGuestLogin>
+      <img (click)="openLogin()" src="/assets/icon/user1.png" class="w-[28px]">
+    </ng-template>
   </div>
 </div>

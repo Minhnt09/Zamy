@@ -21,6 +21,7 @@ import { ProductsAdminComponent } from './features/admin/products-admin/products
 import { LoginAdminComponent } from './features/admin/login-admin/login-admin.component';
 import { adminGuard } from './guards/admin.guard';
 import { SearchResultsComponent } from './features/search-results/search-results.component';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -95,7 +96,8 @@ export const routes: Routes = [
   },
   {
     path: 'products-detail',
-    component: ProductDetailComponent
+    component: ProductDetailComponent,
+    canActivate: [authGuard]
   },
   {
     path: 'return-policy',
