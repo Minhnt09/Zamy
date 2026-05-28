@@ -1,35 +1,79 @@
 <!-- OVERLAY -->
-<div 
+<div
   class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
   *ngIf="isSearchOpen"
   (click)="closeSearch()">
 </div>
 
 <!-- POPUP SEARCH BAR -->
-<div 
-  class="fixed top-0 left-0 w-full shadow-lg z-50 px-6 py-4 bg-[#F7EBE4]
+<div
+  class="fixed top-0 left-0 w-full shadow-lg z-50 px-4 sm:px-6 py-4 bg-[#F7EBE4]
          transform transition-transform duration-300"
   [class.translate-y-0]="isSearchOpen"
   [class.-translate-y-full]="!isSearchOpen"
   (click)="$event.stopPropagation()">
 
-  <div class="flex items-center gap-4">
+  <div class="mx-auto max-w-6xl">
+    <form
+      class="flex items-center gap-3 sm:gap-4"
+      (ngSubmit)="submitSearch()"
+    >
+      <img src="assets/icon/timkiem3.png" class="w-6 h-6 cursor-pointer" alt="Search" />
 
-    <img src="assets/icon/timkiem3.png" class="w-6 h-6 cursor-pointer"/>
+      <input
+        type="text"
+        name="keyword"
+        placeholder="Nhập tên, mã, màu hoặc size sản phẩm..."
+        class="w-full px-4 sm:px-5 py-3 rounded-xl outline-none
+               placeholder:text-[#AE8989] text-[18px] sm:text-[24px] font-medium"
+        [(ngModel)]="keyword"
+        autofocus
+      />
 
-    <input
-      type="text"
-      placeholder="Tìm kiếm sản phẩm..."
-      class="w-full px-5 py-3 rounded-xl outline-none
-       placeholder:text-[#AE8989] text-[28px] font-medium"
-      [(ngModel)]="keyword"
-    />
+      <button
+        type="button"
+        class="text-2xl leading-none px-2"
+        (click)="closeSearch()">
+        x
+      </button>
+    </form>
 
-    <button 
-      class="text-2xl"
-      (click)="closeSearch()">
-      ✕
-    </button>
+    <div
+      *ngIf="keyword.trim()"
+      class="mt-4 bg-white rounded-xl shadow-md overflow-hidden"
+    >
+      <div *ngIf="loading" class="px-4 py-4 text-[#8A5252]">
+        Đang tải kết quả tìm kiếm...
+      </div>
 
+      <button
+        type="button"
+        *ngFor="let product of filteredProducts"
+        class="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-[#F7EBE4]"
+        (click)="goToProduct(product.id)"
+      >
+        <img
+          [src]="product.image"
+          [alt]="product.name"
+          class="w-14 h-14 rounded object-cover bg-[#F7EBE4]"
+        />
+
+        <span class="min-w-0 flex-1">
+          <span class="block font-semibold text-[#3a2626] truncate">
+            {{ product.name }}
+          </span>
+          <span class="block text-sm text-gray-500">
+            {{ product.code }} - {{ product.price | number }} VND
+          </span>
+        </span>
+      </button>
+
+      <div
+        *ngIf="!loading && filteredProducts.length === 0"
+        class="px-4 py-4 text-[#8A5252]"
+      >
+        Không tìm thấy sản phẩm phù hợp
+      </div>
+    </div>
   </div>
 </div>

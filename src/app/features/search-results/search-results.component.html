@@ -1,0 +1,84 @@
+<app-navbar></app-navbar>
+
+<div class="min-h-screen bg-[#F7EBE4] font-[Poppins] px-4 sm:px-8 lg:px-16 py-8">
+  <div class="mx-auto max-w-6xl">
+    <h1 class="text-center text-[#8A5252] text-[26px] sm:text-[32px] font-semibold">
+      Kết quả tìm kiếm cho "{{ keyword }}"
+    </h1>
+    <div class="mx-auto mt-2 h-[2px] w-20 bg-[#8A5252]/60"></div>
+
+    <form
+      class="mt-8 flex flex-col sm:flex-row gap-3"
+      (ngSubmit)="submitSearch()"
+    >
+      <input
+        type="text"
+        name="keyword"
+        class="flex-1 rounded-lg border border-[#8A5252]/30 bg-white px-4 py-3 outline-none focus:border-[#8A5252]"
+        placeholder="Nhap ten, ma, mau hoac size san pham..."
+        [(ngModel)]="keyword"
+      />
+
+      <button
+        type="submit"
+        class="rounded-lg bg-[#8A5252] px-6 py-3 font-semibold text-white hover:bg-[#744343]"
+      >
+        Tìm kiếm
+      </button>
+    </form>
+
+    <div class="mt-6 text-[#8A5252]">
+      <span *ngIf="keyword.trim()">
+        Từ khóa: <strong>{{ keyword }}</strong>
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="mt-10 text-center text-[#8A5252] text-lg">
+      Đang tải kết quả tìm kiếm...
+    </div>
+
+    <div
+      *ngIf="!loading && filteredProducts.length > 0"
+      class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+    >
+      <div
+        *ngFor="let product of filteredProducts"
+        class="p-2 transition hover:scale-[1.02]"
+      >
+        <div class="relative">
+          <img
+            [routerLink]="['/products', product.id]"
+            [src]="product.image"
+            [alt]="product.name"
+            class="w-full aspect-[3/4] object-cover cursor-pointer bg-white"
+          />
+        </div>
+
+        <h2
+          [routerLink]="['/products', product.id]"
+          class="mt-3 cursor-pointer text-center text-[16px] font-semibold"
+        >
+          {{ product.name }}
+        </h2>
+
+        <div class="mt-1 text-center">
+          <div class="font-bold text-red-600">
+            {{ product.price | number }} VND
+          </div>
+          <div class="text-sm text-gray-500">
+            {{ product.code }} | {{ product.color }} | {{ product.size }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      *ngIf="!loading && keyword.trim() && filteredProducts.length === 0"
+      class="mt-10 text-center text-[#8A5252] text-lg"
+    >
+      Không tìm thấy sản phẩm phù hợp
+    </div>
+  </div>
+</div>
+
+<app-footer></app-footer>

@@ -20,6 +20,7 @@ import { SizeGuideComponent } from './features/size-guide/size-guide.component';
 import { ProductsAdminComponent } from './features/admin/products-admin/products-admin.component';
 import { LoginAdminComponent } from './features/admin/login-admin/login-admin.component';
 import { adminGuard } from './guards/admin.guard';
+import { SearchResultsComponent } from './features/search-results/search-results.component';
 
 export const routes: Routes = [
   {
@@ -79,6 +80,10 @@ export const routes: Routes = [
   {
     path: 'cart',
     component: ShoppingCartComponent
+  },
+  {
+    path: 'search',
+    component: SearchResultsComponent
   },
   {
     path:'products/:id',
