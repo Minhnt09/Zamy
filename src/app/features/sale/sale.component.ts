@@ -5,6 +5,7 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 import { RouterModule } from '@angular/router';
 import { HighlightProductsComponent } from '../../shared/components/highlight-products/highlight-products.component';
 import { ProductService } from '../services/product.service';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-sale',
@@ -15,6 +16,7 @@ import { ProductService } from '../services/product.service';
     FooterComponent,
     RouterModule,
     HighlightProductsComponent,
+    PaginationComponent,
   ],
   templateUrl: './sale.component.html',
   styleUrl: './sale.component.scss'
@@ -26,6 +28,9 @@ export class SaleComponent implements OnInit {
 
   products: any[] = [];
   filteredProducts: any[] = [];
+  currentPage = 1;
+  pageSize = 6;
+  readonly pageSizeOptions = [6, 9, 12, 24];
 
   maxPrice = 5000000;
   selectedPrice = 5000000;
@@ -35,6 +40,11 @@ export class SaleComponent implements OnInit {
   selectedSizes: string[] = [];
 
   constructor(private productService: ProductService) {}
+
+  get pagedProducts() {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return this.filteredProducts.slice(startIndex, startIndex + this.pageSize);
+  }
 
   ngOnInit(): void {
     this.productService.getAllProducts().subscribe({
@@ -123,6 +133,7 @@ export class SaleComponent implements OnInit {
     }
 
     this.filteredProducts = result;
+    this.currentPage = 1;
   }
 
   resetFilters() {
@@ -131,5 +142,24 @@ export class SaleComponent implements OnInit {
     this.selectedPrice = this.maxPrice;
     this.sortOption = 'newest';
     this.filteredProducts = [...this.products];
+    this.currentPage = 1;
+  }
+
+  onPageChange(page: number) {
+    this.currentPage = page;
+    this.scrollToProductList();
+  }
+
+  onPageSizeChange(pageSize: number) {
+    this.pageSize = pageSize;
+    this.currentPage = 1;
+    this.scrollToProductList();
+  }
+
+  private scrollToProductList() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   }
 }

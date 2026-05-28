@@ -42,7 +42,7 @@
       class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
     >
       <div
-        *ngFor="let product of filteredProducts"
+        *ngFor="let product of pagedProducts"
         class="p-2 transition hover:scale-[1.02]"
       >
         <div class="relative">
@@ -78,6 +78,16 @@
     >
       Không tìm thấy sản phẩm phù hợp
     </div>
+
+    <app-pagination
+      [totalItems]="filteredProducts.length"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="pageSizeOptions"
+      [disabled]="loading"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
   </div>
 </div>
 

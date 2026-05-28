@@ -175,7 +175,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
         <div
           class="p-2 transition hover:scale-[1.02] lg:hover:scale-105"
-          *ngFor="let product of filteredProducts"
+          *ngFor="let product of pagedProducts"
         >
           <div class="relative">
             <span class="absolute left-2 top-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
@@ -219,6 +219,15 @@
       >
         Không tìm thấy sản phẩm phù hợp
       </div>
+
+      <app-pagination
+        [totalItems]="filteredProducts.length"
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      ></app-pagination>
     </div>
   </div>
 </div>

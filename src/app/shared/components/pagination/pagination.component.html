@@ -1,0 +1,65 @@
+<div
+  *ngIf="totalItems > 0"
+  class="mt-8 flex flex-col gap-4 border-t border-[#8A5252]/20 pt-5 sm:flex-row sm:items-center sm:justify-between"
+>
+  <div class="text-sm text-[#6f4a4a]">
+    Hiển thị {{ startItem }}-{{ endItem }} trên {{ totalItems }} sản phẩm
+  </div>
+
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+    <label class="flex items-center gap-2 text-sm text-[#6f4a4a]">
+      <span>Mỗi trang</span>
+      <select
+        class="h-10 rounded-md border border-[#8A5252]/30 bg-white px-2 outline-none focus:border-[#8A5252]"
+        [value]="pageSize"
+        [disabled]="disabled"
+        (change)="changePageSize($event)"
+      >
+        <option *ngFor="let option of pageSizeOptions" [value]="option">
+          {{ option }}
+        </option>
+      </select>
+    </label>
+
+    <nav class="flex items-center gap-1" aria-label="Pagination">
+      <button
+        type="button"
+        class="h-10 min-w-10 rounded-md border border-[#8A5252]/30 bg-white px-3 text-[#8A5252] disabled:cursor-not-allowed disabled:opacity-40"
+        [disabled]="disabled || safeCurrentPage === 1"
+        (click)="goToPrevious()"
+      >
+        Trước
+      </button>
+
+      <ng-container *ngFor="let page of pages">
+        <button
+          *ngIf="isNumber(page); else ellipsis"
+          type="button"
+          class="h-10 min-w-10 rounded-md border px-3 font-medium"
+          [ngClass]="page === safeCurrentPage
+            ? 'border-[#8A5252] bg-[#8A5252] text-white'
+            : 'border-[#8A5252]/30 bg-white text-[#8A5252]'"
+          [disabled]="disabled"
+          (click)="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+
+        <ng-template #ellipsis>
+          <span class="flex h-10 min-w-8 items-center justify-center text-[#8A5252]">
+            ...
+          </span>
+        </ng-template>
+      </ng-container>
+
+      <button
+        type="button"
+        class="h-10 min-w-10 rounded-md border border-[#8A5252]/30 bg-white px-3 text-[#8A5252] disabled:cursor-not-allowed disabled:opacity-40"
+        [disabled]="disabled || safeCurrentPage === totalPages"
+        (click)="goToNext()"
+      >
+        Sau
+      </button>
+    </nav>
+  </div>
+</div>
