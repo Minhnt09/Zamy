@@ -37,6 +37,8 @@ export class CheckoutComponent {
   isSubmitting = false;
   submitError = '';
   shippingFee = 20000;
+  cashOnDeliveryOrderCode = '';
+  isCashOnDeliverySuccessVisible = false;
   form!: FormGroup;
   cart: any[] = [];
 
@@ -140,9 +142,7 @@ export class CheckoutComponent {
           return;
         }
 
-        this.router.navigate(['/payment-success'], {
-          queryParams: { orderCode },
-        });
+        this.showCashOnDeliverySuccess(orderCode);
         console.log('POST /orders response', res);
       },
       error: (err) => {
@@ -183,6 +183,16 @@ export class CheckoutComponent {
 
   handleCancel() {
     this.isShowBack = false;
+  }
+
+  private showCashOnDeliverySuccess(orderCode: string) {
+    this.cashOnDeliveryOrderCode = orderCode;
+    this.isCashOnDeliverySuccessVisible = true;
+  }
+
+  closeCashOnDeliverySuccess() {
+    this.isCashOnDeliverySuccessVisible = false;
+    this.router.navigate(['/home']);
   }
 
   getTotalPrice() {

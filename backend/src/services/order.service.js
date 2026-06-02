@@ -14,7 +14,7 @@ function createOrder(payload) {
     const { customer, items, paymentMethod = 'cod', shippingFee = 0 } = payload;
 
     //1) Validate customer
-    if (!customer?.name || !customer?.phone || !customer?.address || !customer?.email) {
+    if (!customer?.name || !customer?.phone || !customer?.address) {
         return { status: 400, error: 'Thiếu thông tin khách hàng' };
     }
 

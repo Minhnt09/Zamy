@@ -13,7 +13,8 @@ const createOrder = (req, res) => {
       req.headers['x-forwarded-for'] ||
       req.connection.remoteAddress ||
       req.socket.remoteAddress ||
-      req.connection.socket.remoteAddress;
+      req.connection.socket.remoteAddress ||
+      '127.0.0.1';
 
     const paymentUrl = createVnpayPaymentUrl(order, ipAddr);
 
@@ -23,6 +24,11 @@ const createOrder = (req, res) => {
       paymentUrl,
     });
   }
+
+  return res.status(201).json({
+    message: 'Dat hang thanh cong',
+    data: order,
+  });
 };
 
 const getOrderByCode = (req, res) => {
