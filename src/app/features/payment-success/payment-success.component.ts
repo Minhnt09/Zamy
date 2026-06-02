@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { OrderService } from '../services/order.service';
 
 @Component({
   selector: 'app-payment-success',
@@ -16,7 +17,7 @@ export class PaymentSuccessComponent {
 
   constructor(
     private route: ActivatedRoute,
-    private http: HttpClient
+    private orderService: OrderService,
   ) {}
 
   ngOnInit() {
@@ -26,13 +27,11 @@ export class PaymentSuccessComponent {
       if (!this.orderCode) return;
 
 
-      this.http
-        .get(`https://my-app-uc3a.onrender.com/orders/${this.orderCode}`)
-        .subscribe({
-          next: (res: any) => {
-            this.order = res.data;
-            console.log('this.order:', this.order);
-          },
+      this.orderService.getOrderByCode(this.orderCode).subscribe({
+        next: (res: any) => {
+          this.order = res.data;
+          console.log('this.order:', this.order);
+        },
         });
     });
   }

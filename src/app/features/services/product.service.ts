@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 export interface Product {
   id: number;
@@ -17,7 +18,7 @@ export interface Product {
   providedIn: 'root'
 })
 export class ProductService {
-  private baseUrl = 'https://my-app-uc3a.onrender.com/products';
+  private baseUrl = `${environment.apiUrl}/products`;
   
   constructor(private http: HttpClient) {}
 

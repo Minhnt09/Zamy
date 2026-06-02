@@ -8,13 +8,13 @@ import { FooterComponent } from "../../shared/components/footer/footer.component
 import { CheckoutService } from '../services/checkout.service';
 
 @Component({
-  selector: 'app-shopping-cart',
+  selector: 'app-cart',
   standalone: true,
   imports: [NavbarComponent, CommonModule, FooterComponent],
-  templateUrl: './shopping-cart.component.html',
-  styleUrls: ['./shopping-cart.component.scss']
+  templateUrl: './cart.component.html',
+  styleUrls: ['./cart.component.scss']
 })
-export class ShoppingCartComponent implements OnInit, OnDestroy {
+export class CartComponent implements OnInit, OnDestroy {
   cart: any[] = [];
   product: any;
   selectedProductIds = new Set<string | number>();
@@ -66,7 +66,7 @@ export class ShoppingCartComponent implements OnInit, OnDestroy {
     }
 
     this.checkoutService.setProducts(selectedItems);
-    this.router.navigate(['/products-detail']);
+    this.router.navigate(['/checkout']);
   }
 
   isSelected(product: any) {

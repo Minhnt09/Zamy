@@ -96,7 +96,7 @@ export class NavbarComponent {
   }
 
   goFavorite() {
-    this.router.navigate(['/favorite']);
+    this.router.navigate(['/favorites']);
   }
 
   goCart() {

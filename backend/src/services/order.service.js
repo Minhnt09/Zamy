@@ -11,7 +11,7 @@ function geneateOrderCode() {
     return `ZAMY-${y}${m}${day}-${running}`;
 }
 function createOrder(payload) {
-    const { customer, items } = payload;
+    const { customer, items, paymentMethod = 'cod', shippingFee = 0 } = payload;
 
     //1) Validate customer
     if (!customer?.name || !customer?.phone || !customer?.address || !customer?.email) {
@@ -69,6 +69,10 @@ function createOrder(payload) {
         customer,
         items: orderItems,
         total,
+        paymentMethod,
+        shippingFee,
+        grandTotal: total + shippingFee,
+        paymentStatus: paymentMethod === 'vnpay' ? 'pending' : 'unpaid',
         status: 'pending',
         createAt: new Date().toISOString()
     };

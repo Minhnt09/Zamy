@@ -6,12 +6,12 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
 @Component({
-  selector: 'app-products-admin',
+  selector: 'app-admin-products',
   standalone: true,
   imports: [CommonModule, FormsModule, HttpClientModule],
-  templateUrl: './products-admin.component.html'
+  templateUrl: './admin-products.component.html'
 })
-export class ProductsAdminComponent implements OnInit {
+export class AdminProductsComponent implements OnInit {
 
   products:any[]=[];
 

@@ -5,13 +5,13 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-favorite',
+  selector: 'app-favorites',
   standalone: true,
   imports: [NavbarComponent, FooterComponent, CommonModule],
-  templateUrl: './favorite.component.html',
-  styleUrls: ['./favorite.component.scss']
+  templateUrl: './favorites.component.html',
+  styleUrls: ['./favorites.component.scss']
 })
-export class FavoriteComponent implements OnInit {
+export class FavoritesComponent implements OnInit {
   favorites: any[] = [];
 
   constructor(private cartService: CartservicesService) {}

@@ -6,12 +6,12 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
 @Component({
-  selector: 'app-login-admin',
+  selector: 'app-admin-login',
   standalone: true,
   imports: [CommonModule, FormsModule, HttpClientModule],
-  templateUrl: './login-admin.component.html'
+  templateUrl: './admin-login.component.html'
 })
-export class LoginAdminComponent {
+export class AdminLoginComponent {
   email = '';
   password = '';
 

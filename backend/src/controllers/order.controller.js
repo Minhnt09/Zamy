@@ -1,9 +1,28 @@
 const orderService = require('../services/order.service');
+const { createVnpayPaymentUrl } = require('../services/vnpay.service');
 
 const createOrder = (req, res) => {
   const result = orderService.createOrder(req.body);
-  if (result.error) return res.status(result.status || 400).json({ error: result.error });
-  return res.status(201).json({ message: 'Đặt hàng thành công', data: result.data });
+  if (result.error) {
+    return res.status(result.status || 400).json({ error: result.error });
+  }
+
+  const order = result.data;
+  if (req.body.paymentMethod === 'vnpay') {
+    const ipAddr = 
+      req.headers['x-forwarded-for'] ||
+      req.connection.remoteAddress ||
+      req.socket.remoteAddress ||
+      req.connection.socket.remoteAddress;
+
+    const paymentUrl = createVnpayPaymentUrl(order, ipAddr);
+
+    return res.status(201).json({
+      message: 'Đặt hàng thành công',
+      data: order,
+      paymentUrl,
+    });
+  }
 };
 
 const getOrderByCode = (req, res) => {
@@ -26,5 +45,14 @@ const updateOrderStatus = (req, res) => {
   if (result.error) return res.status(result.status || 400).json({ error: result.error });
   return res.json({ message: 'Cập nhật trạng thái thành công', data: result.data });
 };
+const vnpayReturn = (req, res) => {
+    return res.redirect(`${process.env.FRONTEND_URL}/payment-success?orderCode=${req.query.vnp_TxnRef}&vnp_ResponseCode=${req.query.vnp_ResponseCode}`);
+};
 
-module.exports = { createOrder, getOrderByCode, getAllOrders, updateOrderStatus };
+module.exports = { 
+  createOrder, 
+  getOrderByCode, 
+  getAllOrders, 
+  updateOrderStatus, 
+  vnpayReturn 
+};

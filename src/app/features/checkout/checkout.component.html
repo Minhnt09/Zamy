@@ -1,0 +1,172 @@
+<app-navbar></app-navbar>
+
+<div class="bg-[#F7EBE4] min-h-screen p-6 font-arima">
+  <div class="max-w-6xl mx-auto">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+      <!-- Nút quay lại -->
+      <button type="button" (click)="goBack()">
+        <img src="/assets/icon/back.png" alt="Quay lại">
+      </button>
+
+      <div class="text-center font-medium text-[48px] mb-6 text-[#AE8989]">
+        THÔNG TIN THANH TOÁN
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+
+        <!-- Thông tin khách hàng -->
+        <div class="bg-white rounded-xl p-4 md:col-span-2">
+
+          <p class="font-bold text-[22px] mb-2">Thông tin khách hàng <span class="text-red-500">*</span></p>
+
+          <div class="p-2">
+            <nz-input-group>
+              <input
+                type="text"
+                formControlName="fullName"
+                placeholder="Nhập họ và tên"
+                maxlength="50"
+                class="w-full p-2 border rounded-lg"
+              />
+            </nz-input-group>
+            <div *ngIf="fullName?.invalid && fullName?.touched" class="text-red-500 text-xs mt-1">
+              Vui lòng nhập thông tin họ và tên!
+            </div>
+          </div>
+
+          <div class="p-2">
+            <nz-input-group>
+              <input
+                type="text"
+                formControlName="phoneNumber"
+                placeholder="Nhập số điện thoại"
+                maxlength="10"
+                class="w-full p-2 border rounded-lg"
+              />
+            </nz-input-group>
+            <div *ngIf="phoneNumber?.invalid && phoneNumber?.touched" class="text-red-500 text-xs mt-1">
+              Vui lòng nhập số điện thoại hợp lệ!
+            </div>
+          </div>
+
+          <div class="p-2">
+            <nz-input-group>
+              <input
+                type="email"
+                formControlName="email"
+                placeholder="Nhập email (Không bắt buộc)"
+                maxlength="50"
+                class="w-full p-2 border rounded-lg"
+              />
+            </nz-input-group>
+          </div>
+
+          <!-- Địa chỉ -->
+          <p class="font-bold text-[22px] mt-7 mb-2">Địa chỉ nhận hàng <span class="text-red-500">*</span></p>
+
+          <div class="p-2">
+            <select formControlName="province" class="w-full border rounded-lg p-2">
+              <option value="" disabled selected>Chọn Tỉnh/Thành phố</option>
+              <option>Hà Nội</option>
+              <option>Quảng Ninh</option>
+            </select>
+            <div *ngIf="province?.invalid && province?.touched" class="text-red-500 text-xs mt-1">
+              Vui lòng chọn Tỉnh/Thành phố!
+            </div>
+          </div>
+
+          <div class="p-2">
+            <select formControlName="district" class="w-full border rounded-lg p-2">
+              <option value="" disabled selected>Chọn Quận/Huyện</option>
+              <option>Cầu Giấy</option>
+              <option>Hạ Long</option>
+            </select>
+            <div *ngIf="district?.invalid && district?.touched" class="text-red-500 text-xs mt-1">
+              Vui lòng chọn Quận/Huyện!
+            </div>
+          </div>
+
+          <div class="p-2">
+            <nz-input-group>
+              <input
+                type="text"
+                formControlName="address"
+                placeholder="Địa chỉ chi tiết"
+                maxlength="50"
+                class="w-full border rounded-lg p-2"
+              />
+            </nz-input-group>
+            <div *ngIf="address?.invalid && address?.touched" class="text-red-500 text-xs mt-1">
+              Vui lòng nhập địa chỉ chi tiết!
+            </div>
+          </div>
+
+          <!-- Thanh toán -->
+          <p class="font-bold text-[22px] mt-7 mb-2">Phương thức thanh toán</p>
+          <label class="flex items-center border rounded-xl px-4 py-3 mb-3 cursor-pointer shadow-md">
+            <input
+              type="radio"
+              formControlName="paymentMethod"
+              value="cod"
+              class="mr-2 accent-pink-500"
+            />
+            Thanh toán khi nhận hàng
+          </label>
+
+          <label class="flex items-center border rounded-xl px-4 py-3 cursor-pointer shadow-md">
+            <input
+              type="radio"
+              formControlName="paymentMethod"
+              value="vnpay"
+              class="mr-2 accent-pink-500"
+            />
+            <img src="/assets/icon/vnpay.png" class="h-7 mr-2" />
+            VNPay QR
+          </label>
+        </div>
+
+        <!-- Đơn hàng -->
+        <div class="flex flex-col justify-between md:col-span-1">
+
+          <div class="bg-[#AE8989] rounded-2xl p-6">
+            <p class="font-bold text-[24px] mb-4">Đơn hàng của bạn</p>
+
+            <div class="space-y-3 mb-3" *ngFor="let item of cart">
+              <div class="flex items-center gap-3">
+                <img [src]="item.image" class="w-[30%] rounded-lg" />
+                <div class="flex-1">
+                  <p class="font-semibold text-sm">{{ item.name }}</p>
+                  <p class="text-[12px] mt-1">Mã: DS0001 · Size: {{ item.size || 'M' }}</p>
+                </div>
+                <div class="font-semibold text-sm">{{ item.price | number }} đ</div>
+              </div>
+            </div>
+
+            <div class="flex justify-between">
+              <span>Tổng tiền</span>
+              <span>{{ getTotalPrice() | number }} đ</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Phí vận chuyển</span>
+              <span>20.000 đ</span>
+            </div>
+
+            <div class="flex justify-between font-bold text-lg mt-2">
+              <span>Tổng thanh toán</span>
+              <span>{{ getTotalPrice() + 20000 | number }} đ</span>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            class="mt-4 w-full bg-[#AE8989] text-white py-3 rounded-full text-lg font-semibold">
+            Thanh toán ngay
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<app-footer></app-footer>

@@ -8,20 +8,20 @@ import { DressComponent } from './features/dress/dress.component';
 import { SaleComponent } from './features/sale/sale.component';
 import { AboutUsComponent } from './features/about-us/about-us.component';
 import { NewsComponent } from './features/news/news.component';
-import { FavoriteComponent } from './features/favorite/favorite.component';
-import { ProductsComponent } from './features/products/products.component';
+import { FavoritesComponent } from './features/favorites/favorites.component';
 import { HighlightProductsComponent } from './shared/components/highlight-products/highlight-products.component';
-import { ShoppingCartComponent } from './features/shopping-cart/shopping-cart.component';
 import { ProductDetailComponent } from './features/product-detail/product-detail.component';
+import { CheckoutComponent } from './features/checkout/checkout.component';
 import { ReturnPolicyComponent } from './features/return-policy/return-policy.component';
 import { PaymentSuccessComponent } from './features/payment-success/payment-success.component';
 import { ShippingPolicyComponent } from './features/shipping-policy/shipping-policy.component';
 import { SizeGuideComponent } from './features/size-guide/size-guide.component';
-import { ProductsAdminComponent } from './features/admin/products-admin/products-admin.component';
-import { LoginAdminComponent } from './features/admin/login-admin/login-admin.component';
+import { AdminProductsComponent } from './features/admin/admin-products/admin-products.component';
+import { AdminLoginComponent } from './features/admin/admin-login/admin-login.component';
 import { adminGuard } from './guards/admin.guard';
 import { SearchResultsComponent } from './features/search-results/search-results.component';
 import { authGuard } from './guards/auth.guard';
+import { CartComponent } from './features/cart/cart.component';
 
 export const routes: Routes = [
   {
@@ -35,12 +35,12 @@ export const routes: Routes = [
   },
   {
     path: 'admin/products',
-    component: ProductsAdminComponent,
+    component: AdminProductsComponent,
     canActivate: [adminGuard]
   },
   {
     path: 'admin/login',
-    component: LoginAdminComponent
+    component: AdminLoginComponent
   },
   {
     path: 'sale',
@@ -76,11 +76,16 @@ export const routes: Routes = [
   },
   {
     path: 'favorite',
-    component: FavoriteComponent
+    redirectTo: 'favorites',
+    pathMatch: 'full'
+  },
+  {
+    path: 'favorites',
+    component: FavoritesComponent
   },
   {
     path: 'cart',
-    component: ShoppingCartComponent
+    component: CartComponent
   },
   {
     path: 'search',
@@ -88,7 +93,7 @@ export const routes: Routes = [
   },
   {
     path:'products/:id',
-    component: ProductsComponent
+    component: ProductDetailComponent
   },
   {
     path: 'san-pham-noi-bat',
@@ -96,7 +101,12 @@ export const routes: Routes = [
   },
   {
     path: 'products-detail',
-    component: ProductDetailComponent,
+    redirectTo: 'checkout',
+    pathMatch: 'full'
+  },
+  {
+    path: 'checkout',
+    component: CheckoutComponent,
     canActivate: [authGuard]
   },
   {
