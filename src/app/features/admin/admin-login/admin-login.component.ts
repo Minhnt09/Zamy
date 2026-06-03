@@ -14,27 +14,34 @@ import { environment } from '../../../environments/environment';
 export class AdminLoginComponent {
   email = '';
   password = '';
-
-  // loginApi = 'http://localhost:3000/auth/admin/login';
+  errorMessage = '';
   loginApi = `${environment.apiUrl}/auth/admin/login`;
 
   constructor(private http: HttpClient, private router: Router) {}
 
   login() {
+    const email = this.email.trim();
+    const password = this.password.trim();
+
+    if (!email || !password) {
+      this.errorMessage = 'Vui lòng nhập đầy đủ trường thông tin';
+      return;
+    }
+
+    this.errorMessage = '';
+
     this.http.post<any>(this.loginApi, {
-      email: this.email,
-      password: this.password
+      email,
+      password
     }).subscribe({
       next: (res) => {
-        // console.log('Login response:', res);
-
         localStorage.setItem('adminToken', res.token);
         localStorage.setItem('adminUser', JSON.stringify(res.user));
 
         this.router.navigate(['/admin/products']);
       },
-      error: (err) => {
-        alert(err.error?.error || 'Đăng nhập thất bại');
+      error: () => {
+        this.errorMessage = 'Tài khoản hoặc mật khẩu sai';
       }
     });
   }

@@ -1,6 +1,6 @@
 const products = [
     { id: 1, 
-      name: 'Đầm xanh công sở',
+      name: 'Váy xanh công sở',
       image: "assets/img/sale1.png",
       price: 500000,
       color: 'Xanh dương',
@@ -39,7 +39,7 @@ const products = [
     },
     {
       id: 5,
-      name: 'Dress for party',
+      name: 'Đầm đen công sở',
       image: "assets/img/dress1.png",
       price: 450000,
       color: 'Đen',
@@ -49,7 +49,7 @@ const products = [
     },
     {
       id: 6,
-      name: 'Evening Gown',
+      name: 'Váy dạ hội đen',
       image: "assets/img/dress2.png",
       price: 600000,
       color: 'Đen',
@@ -59,7 +59,7 @@ const products = [
     },
     {
       id: 7,
-      name: 'Casual summer dress',
+      name: 'Váy trắng công chúa',
       image: "assets/img/dress3.png",
       price: 550000,
       color: 'Trắng',
@@ -69,7 +69,7 @@ const products = [
     },
     {
       id: 8,
-      name: 'Floral print dress',
+      name: 'Váy đen',
       image: "assets/img/dress4.png",
       price: 470000,
       color: 'Đen',
@@ -79,7 +79,7 @@ const products = [
     },
     {
       id: 9,
-      name: 'Summer dress',
+      name: 'Váy nâu công sở',
       image: "assets/img/shirt1.png",
       price: 300000,
       color: 'Nâu',
@@ -89,7 +89,7 @@ const products = [
     },
     {
       id: 10,
-      name: 'Formal office dress',
+      name: 'Váy công sở formal',
       image: "assets/img/shirt2.png",
       price: 280000,
       color: 'Nâu',
@@ -99,7 +99,7 @@ const products = [
     },
     {
       id: 11,
-      name: 'Cocktail dress',
+      name: 'Áo gile nâu',
       image: "assets/img/shirt3.png",
       price: 350000,
       color: 'Nâu',
@@ -109,7 +109,7 @@ const products = [
     },
     {
       id: 12,
-      name: 'Vintage style dress',
+      name: 'Áo giữ nhiệt đen',
       image: "assets/img/shirt4.png",
       price: 450000,
       color: 'Đen',
@@ -119,7 +119,7 @@ const products = [
     },
     {
       id: 13,
-      name: 'Bohemian maxi dress',
+      name: 'Quần xuông nâu',
       image: "assets/img/trousers1.png",
       price: 500000,
       color: 'Nâu',
@@ -129,7 +129,7 @@ const products = [
     },
     {
       id: 14,
-      name: 'Little black dress',
+      name: 'Quần xuông đen',
       image: "assets/img/trousers2.png",
       price: 600000,
       color: 'Đen',
@@ -139,7 +139,7 @@ const products = [
     },
     {
       id: 15,
-      name: 'Pleated midi dress',
+      name: 'Áo blazer trắng',
       image: "assets/img/trousers3.png",
       price: 350000,
       color: 'Đen',
@@ -149,7 +149,7 @@ const products = [
     },
     {
       id: 16,
-      name: 'Wrap dress',
+      name: 'Quần xuông nâu',
       image: "assets/img/trousers4.png",
       price: 400000,
       color: 'Nâu',
@@ -159,7 +159,7 @@ const products = [
     },
     {
       id: 17,
-      name: 'Sundress',
+      name: 'Áo đen trung niên',
       image: "assets/img/skirt1.png",
       price: 300000,
       color: 'Xám',
@@ -169,7 +169,7 @@ const products = [
     },
     {
       id: 18,
-      name: 'Đầm trắng dạ hội',
+      name: 'Chân váy đỏ đô',
       image: "assets/img/skirt2.png",
       price: 450000,
       color: 'Đỏ',
@@ -179,7 +179,7 @@ const products = [
     },
     {
       id: 19,
-      name: 'Đầm xanh công sở',
+      name: 'Áo đen công sở',
       image: "assets/img/skirt3.png",
       price: 400000,
       color: 'Đen',
@@ -189,7 +189,7 @@ const products = [
     },
     {
       id: 20,
-      name: 'Đầm đen dự tiệc',
+      name: 'Chân váy hồng',
       image: "assets/img/skirt4.png",
       price: 350000,
       color: 'Đỏ',

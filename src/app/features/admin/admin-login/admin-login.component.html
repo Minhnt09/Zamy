@@ -16,6 +16,10 @@
       [(ngModel)]="password"
     />
 
+    <p *ngIf="errorMessage" class="text-red-600 text-sm font-medium mb-4">
+      {{ errorMessage }}
+    </p>
+
     <button
       class="bg-blue-600 text-white w-full py-3 rounded hover:bg-blue-700"
       (click)="login()"

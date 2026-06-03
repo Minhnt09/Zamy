@@ -8,9 +8,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'my_secret_key';
 const loginAdmin = (req, res) => {
   const { email, password } = req.body;
 
+  if (!String(email || '').trim() || !String(password || '').trim()) {
+    return res.status(400).json({
+      error: 'Vui lòng nhập đầy đủ trường thông tin'
+    });
+  }
+
   if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
     return res.status(401).json({
-      error: 'Sai email hoặc mật khẩu'
+      error: 'Tài khoản hoặc mật khẩu sai'
     });
   }
 
