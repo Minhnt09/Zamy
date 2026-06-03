@@ -16,14 +16,54 @@
     </h2>
 
     <div class="grid grid-cols-4 gap-4">
-      <input class="border p-2 rounded" [(ngModel)]="newProduct.name" placeholder="Product name" />
-      <input class="border p-2 rounded" [(ngModel)]="newProduct.image" placeholder="Image URL" />
-      <input class="border p-2 rounded" type="number" [(ngModel)]="newProduct.price" placeholder="Price" />
-      <input class="border p-2 rounded" [(ngModel)]="newProduct.code" placeholder="Code" />
+      <div>
+        <input class="border p-2 rounded w-full" [(ngModel)]="newProduct.name" placeholder="Product name" />
+        <p *ngIf="productErrors.name" class="text-red-600 text-sm mt-1">
+          {{ productErrors.name }}
+        </p>
+      </div>
 
-      <input class="border p-2 rounded" [(ngModel)]="newProduct.color" placeholder="Color" />
-      <input class="border p-2 rounded" [(ngModel)]="newProduct.size" placeholder="Size" />
-      <input class="border p-2 rounded" type="number" [(ngModel)]="newProduct.stock" placeholder="Stock" />
+      <div>
+        <input class="border p-2 rounded w-full" [(ngModel)]="newProduct.image" placeholder="Image URL" />
+        <p *ngIf="productErrors.image" class="text-red-600 text-sm mt-1">
+          {{ productErrors.image }}
+        </p>
+      </div>
+
+      <div>
+        <input class="border p-2 rounded w-full" type="number" [(ngModel)]="newProduct.price" placeholder="Price" />
+        <p *ngIf="productErrors.price" class="text-red-600 text-sm mt-1">
+          {{ productErrors.price }}
+        </p>
+      </div>
+
+      <div>
+        <input class="border p-2 rounded w-full" [(ngModel)]="newProduct.code" placeholder="Code" />
+        <p *ngIf="productErrors.code" class="text-red-600 text-sm mt-1">
+          {{ productErrors.code }}
+        </p>
+      </div>
+
+      <div>
+        <input class="border p-2 rounded w-full" [(ngModel)]="newProduct.color" placeholder="Color" />
+        <p *ngIf="productErrors.color" class="text-red-600 text-sm mt-1">
+          {{ productErrors.color }}
+        </p>
+      </div>
+
+      <div>
+        <input class="border p-2 rounded w-full" [(ngModel)]="newProduct.size" placeholder="Size" />
+        <p *ngIf="productErrors.size" class="text-red-600 text-sm mt-1">
+          {{ productErrors.size }}
+        </p>
+      </div>
+
+      <div>
+        <input class="border p-2 rounded w-full" type="number" [(ngModel)]="newProduct.stock" placeholder="Stock" />
+        <p *ngIf="productErrors.stock" class="text-red-600 text-sm mt-1">
+          {{ productErrors.stock }}
+        </p>
+      </div>
 
       <button
         (click)="submitProduct()"
@@ -40,7 +80,15 @@
         Cancel
       </button>
     </div>
+
+    <p *ngIf="submitError" class="text-red-600 text-sm font-medium mt-4">
+      {{ submitError }}
+    </p>
   </div>
+
+  <p *ngIf="loadError" class="text-red-600 text-sm font-medium mb-4">
+    {{ loadError }}
+  </p>
 
   <div class="bg-white shadow-md rounded-lg overflow-hidden">
     <table class="w-full">

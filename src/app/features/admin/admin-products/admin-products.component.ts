@@ -12,23 +12,24 @@ import { environment } from '../../../environments/environment';
   templateUrl: './admin-products.component.html'
 })
 export class AdminProductsComponent implements OnInit {
-
-  products:any[]=[];
+  products: any[] = [];
 
   // api="https://my-app-uc3a.onrender.com/api/products";
   api = `${environment.apiUrl}/products`;
 
   editingId: number | null = null;
-
   newProduct: any = this.getEmptyProduct();
+  productErrors: any = {};
+  submitError = '';
+  loadError = '';
 
-  constructor( private http:HttpClient,private router: Router){}
+  constructor(private http: HttpClient, private router: Router) {}
 
-  ngOnInit(){
+  ngOnInit() {
     this.loadProducts();
   }
 
-  getEmptyProduct(){
+  getEmptyProduct() {
     return {
       name: '',
       price: '',
@@ -41,49 +42,87 @@ export class AdminProductsComponent implements OnInit {
   }
 
   loadProducts() {
-  this.http.get<any>(this.api).subscribe({
-    next: (res) => {
-      console.log('Products response:', res);
-      this.products = res.data;
-    },
-    error: (err) => {
-      console.error('Load products error:', err);
-      alert('Không tải được danh sách sản phẩm');
-    }
-  });
-}
+    this.http.get<any>(this.api).subscribe({
+      next: (res) => {
+        console.log('Products response:', res);
+        this.products = res.data;
+        this.loadError = '';
+      },
+      error: (err) => {
+        console.error('Load products error:', err);
+        this.loadError = 'Không tải được danh sách sản phẩm';
+      }
+    });
+  }
 
   submitProduct() {
-    if(!this.newProduct.name || !this.newProduct.image || !this.newProduct.code){
-      alert("Vui lòng nhập name, image và code");
+    if (!this.validateProduct()) {
       return;
     }
-    if(this.newProduct.price === '' || Number(this.newProduct.price) < 0){
-      alert("Price phải là số dương");
-      return;
-    }
-    if(this.editingId){
+
+    if (this.editingId) {
       this.updateProduct();
-    }else{
+    } else {
       this.addProduct();
     }
+  }
+
+  validateProduct() {
+    this.productErrors = {};
+    this.submitError = '';
+
+    if (!String(this.newProduct.name || '').trim()) {
+      this.productErrors.name = 'Vui lòng nhập Product name';
+    }
+
+    if (!String(this.newProduct.image || '').trim()) {
+      this.productErrors.image = 'Vui lòng nhập Image URL';
+    }
+
+    if (this.newProduct.price === '' || this.newProduct.price === null || this.newProduct.price === undefined) {
+      this.productErrors.price = 'Vui lòng nhập Price';
+    } else if (Number(this.newProduct.price) < 0) {
+      this.productErrors.price = 'Price phải là số dương';
+    }
+
+    if (!String(this.newProduct.code || '').trim()) {
+      this.productErrors.code = 'Vui lòng nhập Code';
+    }
+
+    if (!String(this.newProduct.color || '').trim()) {
+      this.productErrors.color = 'Vui lòng nhập Color';
+    }
+
+    if (!String(this.newProduct.size || '').trim()) {
+      this.productErrors.size = 'Vui lòng nhập Size';
+    }
+
+    if (this.newProduct.stock === '' || this.newProduct.stock === null || this.newProduct.stock === undefined) {
+      this.productErrors.stock = 'Vui lòng nhập Stock';
+    } else if (Number(this.newProduct.stock) < 0) {
+      this.productErrors.stock = 'Stock phải là số dương';
+    }
+
+    return Object.keys(this.productErrors).length === 0;
   }
 
   addProduct() {
     this.http.post(this.api, this.newProduct, this.getAuthHeaders()).subscribe({
       next: () => {
+        alert('Tạo sản phẩm thành công');
         this.loadProducts();
         this.newProduct = this.getEmptyProduct();
+        this.productErrors = {};
+        this.submitError = '';
       },
       error: (err) => {
-        alert(err.error?.error || 'Thêm sản phẩm thất bại');
+        this.submitError = err.error?.error || 'Thêm sản phẩm thất bại';
       }
     });
   }
 
-  editProduct(product:any) {
+  editProduct(product: any) {
     this.editingId = product.id;
-
     this.newProduct = {
       name: product.name,
       price: product.price,
@@ -93,6 +132,8 @@ export class AdminProductsComponent implements OnInit {
       size: product.size,
       stock: product.stock
     };
+    this.productErrors = {};
+    this.submitError = '';
   }
 
   updateProduct() {
@@ -102,7 +143,7 @@ export class AdminProductsComponent implements OnInit {
         this.cancelEdit();
       },
       error: (err) => {
-        alert(err.error?.error || 'Cập nhật sản phẩm thất bại');
+        this.submitError = err.error?.error || 'Cập nhật sản phẩm thất bại';
       }
     });
   }
@@ -110,6 +151,8 @@ export class AdminProductsComponent implements OnInit {
   cancelEdit() {
     this.editingId = null;
     this.newProduct = this.getEmptyProduct();
+    this.productErrors = {};
+    this.submitError = '';
   }
 
   deleteProduct(id: number) {
@@ -119,7 +162,7 @@ export class AdminProductsComponent implements OnInit {
           this.loadProducts();
         },
         error: (err) => {
-          alert(err.error?.error || 'Xoá sản phẩm thất bại');
+          this.loadError = err.error?.error || 'Xoá sản phẩm thất bại';
         }
       });
     }
@@ -138,7 +181,6 @@ export class AdminProductsComponent implements OnInit {
       headers: new HttpHeaders({
         Authorization: `Bearer ${token}`
       })
-    }; 
+    };
   }
-
 }
