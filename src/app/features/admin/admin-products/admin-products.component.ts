@@ -37,6 +37,7 @@ export class AdminProductsComponent implements OnInit {
       code: '',
       color: '',
       size: '',
+      sizes: '',
       stock: ''
     };
   }
@@ -93,7 +94,7 @@ export class AdminProductsComponent implements OnInit {
       this.productErrors.color = 'Vui lòng nhập Color';
     }
 
-    if (!String(this.newProduct.size || '').trim()) {
+    if (this.parseSizes(this.newProduct.sizes || this.newProduct.size).length === 0) {
       this.productErrors.size = 'Vui lòng nhập Size';
     }
 
@@ -107,7 +108,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   addProduct() {
-    this.http.post(this.api, this.newProduct, this.getAuthHeaders()).subscribe({
+    this.http.post(this.api, this.buildProductPayload(), this.getAuthHeaders()).subscribe({
       next: () => {
         alert('Tạo sản phẩm thành công');
         this.loadProducts();
@@ -130,6 +131,7 @@ export class AdminProductsComponent implements OnInit {
       code: product.code,
       color: product.color,
       size: product.size,
+      sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : product.size,
       stock: product.stock
     };
     this.productErrors = {};
@@ -137,7 +139,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   updateProduct() {
-    this.http.put(`${this.api}/${this.editingId}`, this.newProduct, this.getAuthHeaders()).subscribe({
+    this.http.put(`${this.api}/${this.editingId}`, this.buildProductPayload(), this.getAuthHeaders()).subscribe({
       next: () => {
         this.loadProducts();
         this.cancelEdit();
@@ -182,5 +184,22 @@ export class AdminProductsComponent implements OnInit {
         Authorization: `Bearer ${token}`
       })
     };
+  }
+
+  private buildProductPayload() {
+    const sizes = this.parseSizes(this.newProduct.sizes || this.newProduct.size);
+
+    return {
+      ...this.newProduct,
+      size: sizes[0],
+      sizes
+    };
+  }
+
+  private parseSizes(value: string) {
+    return String(value || '')
+      .split(',')
+      .map(size => size.trim())
+      .filter(Boolean);
   }
 }

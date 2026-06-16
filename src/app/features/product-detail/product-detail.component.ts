@@ -18,6 +18,8 @@ import { CheckoutService } from '../services/checkout.service';
 export class ProductDetailComponent {
   product: any = null;
   loading = true;
+  quantity = 1;
+  selectedSize = '';
 
   @ViewChild('carousel') carousel: any;
 
@@ -41,10 +43,12 @@ export class ProductDetailComponent {
       this.productService.getProductById(+id).subscribe({
         next: (data) => {
           this.product = data;
+          this.quantity = 1;
+          this.selectedSize = '';
           this.loading = false;
         },
         error: (error) => {
-          console.error('Lỗi khi lấy sản phẩm:', error);
+          console.error('Loi khi lay san pham:', error);
           this.product = null;
           this.loading = false;
         }
@@ -54,22 +58,67 @@ export class ProductDetailComponent {
 
   addToCart() {
     if (!this.product) return;
-    this.cartService.addToCart(this.product);
-    alert('Sản phẩm đã được thêm vào giỏ hàng!');
+    if (!this.ensureSizeSelected()) return;
+
+    this.cartService.addToCart(this.product, this.quantity, this.selectedSize);
+    alert('San pham da duoc them vao gio hang!');
   }
 
   addToFavorite() {
     if (!this.product) return;
     this.cartService.addToFavorite(this.product);
-    alert('Đã thêm vào yêu thích');
+    alert('Da them vao yeu thich');
   }
 
   buyNow() {
     if (!this.product) return;
+    if (!this.ensureSizeSelected()) return;
 
-    const checkoutItem = { ...this.product, qty: 1 };
+    const checkoutItem = {
+      ...this.product,
+      qty: this.quantity,
+      size: this.selectedSize,
+      selectedSize: this.selectedSize
+    };
     this.checkoutService.setProducts([checkoutItem]);
     this.router.navigate(['/checkout']);
+  }
+
+  getProductSizes(product = this.product): string[] {
+    if (!product) return [];
+
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+      return product.sizes.map((size: any) => String(size).trim()).filter(Boolean);
+    }
+
+    return product.size ? [String(product.size).trim()] : [];
+  }
+
+  selectSize(size: string) {
+    this.selectedSize = size;
+  }
+
+  changeQuantity(delta: number) {
+    const stock = Number(this.product?.stock) || 0;
+    const nextQuantity = this.quantity + delta;
+    const maxQuantity = stock > 0 ? stock : nextQuantity;
+    this.quantity = Math.min(Math.max(nextQuantity, 1), maxQuantity);
+  }
+
+  private ensureSizeSelected() {
+    const sizes = this.getProductSizes();
+
+    if (sizes.length === 0) {
+      alert('San pham chua co size');
+      return false;
+    }
+
+    if (!this.selectedSize) {
+      alert('Vui lòng chọn size');
+      return false;
+    }
+
+    return true;
   }
 
   scrollLeft() {

@@ -203,7 +203,7 @@
             </span>
 
             <div class="text-sm text-gray-500 mt-1">
-              Màu: {{ product.color }} | Size: {{ product.size }}
+              Màu: {{ product.color }} | Size: {{ product.sizes?.join(', ') || product.size }}
             </div>
 
             <div class="text-sm text-gray-500">

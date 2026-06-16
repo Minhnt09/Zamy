@@ -65,14 +65,35 @@
       <div class="flex items-center gap-6 md:gap-20 justify-between">
         <p class="font-bold text-[20px] md:text-[30px]">Size</p>
         <div class="mt-1 flex flex-wrap gap-2 md:gap-3 cursor-pointer">
-          <span class="px-3 md:px-4 py-1 border rounded-lg bg-white text-[16px] md:text-[20px] hover:scale-105 transition">
-            {{ p.size }}
-          </span>
+          <button
+            type="button"
+            *ngFor="let size of getProductSizes(p)"
+            (click)="selectSize(size)"
+            class="min-w-12 px-3 md:px-4 py-1 border rounded-lg text-[16px] md:text-[20px] font-semibold hover:scale-105 transition"
+            [ngClass]="selectedSize === size ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'">
+            {{ size }}
+          </button>
         </div>
       </div>
 
-      <div>
-        <p class="font-bold text-[20px] md:text-[30px]">Số lượng: {{ p.stock }}</p>
+      <div class="flex flex-wrap items-center gap-4 justify-between">
+        <p class="font-bold text-[20px] md:text-[30px]">Số lượng</p>
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            (click)="changeQuantity(-1)"
+            class="w-9 h-9 bg-gray-200 rounded flex items-center justify-center text-[20px] font-semibold">
+            -
+          </button>
+          <span class="min-w-8 text-center text-[18px] md:text-[24px] font-semibold">{{ quantity }}</span>
+          <button
+            type="button"
+            (click)="changeQuantity(1)"
+            class="w-9 h-9 bg-gray-200 rounded flex items-center justify-center text-[20px] font-semibold">
+            +
+          </button>
+        </div>
+        <p class="text-[14px] md:text-[18px] text-gray-600">Còn {{ p.stock }}</p>
       </div>
 
       <div class="flex flex-col md:flex-row items-stretch md:justify-between gap-3 md:gap-4 mt-2 md:mt-3">

@@ -118,7 +118,7 @@ export class SaleComponent implements OnInit {
 
     if (this.selectedSizes.length > 0) {
       result = result.filter(product =>
-        this.selectedSizes.includes(product.size)
+        this.getProductSizes(product).some(size => this.selectedSizes.includes(size))
       );
     }
 
@@ -161,5 +161,13 @@ export class SaleComponent implements OnInit {
       top: 0,
       behavior: 'smooth'
     });
+  }
+
+  private getProductSizes(product: any): string[] {
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+      return product.sizes;
+    }
+
+    return product.size ? [product.size] : [];
   }
 }

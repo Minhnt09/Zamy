@@ -111,6 +111,7 @@ export class CheckoutComponent {
       items: this.cart.map((item: any) => ({
         productId: item.id,
         qty: item.qty ?? 1,
+        size: item.selectedSize || item.size,
       })),
     };
   }

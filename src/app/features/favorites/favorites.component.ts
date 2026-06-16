@@ -34,7 +34,10 @@ export class FavoritesComponent implements OnInit {
 
   addToCartFromFavorite(product: any) {
     if (!product) return;
-    this.cartService.addToCart(product);
+    const selectedSize = Array.isArray(product.sizes) && product.sizes.length > 0
+      ? product.sizes[0]
+      : product.size;
+    this.cartService.addToCart(product, 1, selectedSize);
     alert('Đã thêm sản phẩm yêu thích vào giỏ hàng');
   }
 }

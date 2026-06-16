@@ -137,7 +137,7 @@
                 <img [src]="item.image" class="w-[30%] rounded-lg" />
                 <div class="flex-1">
                   <p class="font-semibold text-sm">{{ item.name }}</p>
-                  <p class="text-[12px] mt-1">Mã: DS0001 · Size: {{ item.size || 'M' }}</p>
+                  <p class="text-[12px] mt-1">Mã: {{ item.code }} · Size: {{ item.selectedSize || item.size }}</p>
                 </div>
                 <div class="font-semibold text-sm">{{ item.price | number }} đ</div>
               </div>

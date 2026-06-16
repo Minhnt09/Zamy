@@ -92,7 +92,8 @@ export class SearchResultsComponent implements OnInit {
         product.name,
         product.code,
         product.color,
-        product.size
+        product.size,
+        ...(Array.isArray(product.sizes) ? product.sizes : [])
       ].map(value => this.normalize(value)).join(' ');
 
       return searchableText.includes(searchValue);

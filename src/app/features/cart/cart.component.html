@@ -75,7 +75,7 @@
                                     [ngStyle]="{'background': product.color}">
                               </span>
                           </div>
-                          <span class="font-medium">Size: {{ product.size }}</span>
+                          <span class="font-medium">Size: {{ product.selectedSize || product.size }}</span>
                       </div>
 
                       <!-- Quantity & Price -->
@@ -129,7 +129,7 @@
 
                   <!-- Size -->
                   <div class="col-span-1 font-semibold text-[#8A5252]">
-                      {{ product.size }}
+                      {{ product.selectedSize || product.size }}
                   </div>
 
                   <!-- Quantity -->
@@ -163,7 +163,7 @@
           </p>
 
           <div *ngFor="let item of selectedCartItems" class="flex justify-between text-[14px] md:text-[16px] text-[#8A5252] gap-2">
-              <span class="truncate max-w-[120px] md:max-w-[160px]">{{ item.name }}</span>
+              <span class="truncate max-w-[120px] md:max-w-[160px]">{{ item.name }} ({{ item.selectedSize || item.size }})</span>
               <span class="flex-shrink-0">x{{ item.qty }}</span>
               <span class="flex-shrink-0 font-medium">{{ (item.price * (item.qty || 1)) | number }} đ</span>
           </div>

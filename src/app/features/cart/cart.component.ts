@@ -17,7 +17,7 @@ import { CheckoutService } from '../services/checkout.service';
 export class CartComponent implements OnInit, OnDestroy {
   cart: any[] = [];
   product: any;
-  selectedProductIds = new Set<string | number>();
+  selectedCartItemKeys = new Set<string>();
   selectedCartItems: any[] = [];
   private sub?: Subscription;
 
@@ -70,7 +70,7 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   isSelected(product: any) {
-    return product?.id != null && this.selectedProductIds.has(product.id);
+    return product?.id != null && this.selectedCartItemKeys.has(this.getCartItemKey(product));
   }
 
   isAllSelected() {
@@ -83,9 +83,9 @@ export class CartComponent implements OnInit, OnDestroy {
     const checked = (event.target as HTMLInputElement).checked;
 
     if (checked) {
-      this.selectedProductIds.add(product.id);
+      this.selectedCartItemKeys.add(this.getCartItemKey(product));
     } else {
-      this.selectedProductIds.delete(product.id);
+      this.selectedCartItemKeys.delete(this.getCartItemKey(product));
     }
 
     this.updateSelectedCartItems();
@@ -97,14 +97,14 @@ export class CartComponent implements OnInit, OnDestroy {
     if (checked) {
       this.cart.forEach(item => {
         if (item?.id != null) {
-          this.selectedProductIds.add(item.id);
+          this.selectedCartItemKeys.add(this.getCartItemKey(item));
         }
       });
       this.updateSelectedCartItems();
       return;
     }
 
-    this.selectedProductIds.clear();
+    this.selectedCartItemKeys.clear();
     this.updateSelectedCartItems();
   }
 
@@ -117,7 +117,7 @@ export class CartComponent implements OnInit, OnDestroy {
     if (index < 0 || index >= this.cart.length) return;
     const item = this.cart[index];
     if (item?.id != null) {
-      this.selectedProductIds.delete(item.id);
+      this.selectedCartItemKeys.delete(this.getCartItemKey(item));
     }
     const svc: any = this.cartService as any;
 
@@ -125,7 +125,7 @@ export class CartComponent implements OnInit, OnDestroy {
     if (item && item.id != null) {
       if (typeof svc.removeItemById === 'function') {
         try {
-          svc.removeItemById(item.id);
+          svc.removeItemById(item.id, this.getItemSize(item));
           return;
         } catch (e) {
           // ignore and try next
@@ -133,7 +133,7 @@ export class CartComponent implements OnInit, OnDestroy {
       }
       // older naming possibilities
       if (typeof svc.removeItem === 'function') {
-        try { svc.removeItem(item.id ?? item); return; } catch {}
+        try { svc.removeItem(item.id ?? item, this.getItemSize(item)); return; } catch {}
       }
       if (typeof svc.removeCartItem === 'function') {
         try { svc.removeCartItem(item.id ?? item); return; } catch {}
@@ -179,7 +179,7 @@ export class CartComponent implements OnInit, OnDestroy {
     const svc: any = this.cartService as any;
     if (item && item.id != null && typeof svc.updateItemQuantity === 'function') {
       try {
-        svc.updateItemQuantity(item.id, newQty);
+        svc.updateItemQuantity(item.id, this.getItemSize(item), newQty);
         return;
       } catch {}
     }
@@ -210,11 +210,11 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   private syncSelectedProducts() {
-    const availableIds = new Set(this.cart.map(item => item?.id).filter(id => id != null));
+    const availableKeys = new Set(this.cart.filter(item => item?.id != null).map(item => this.getCartItemKey(item)));
 
-    this.selectedProductIds.forEach(id => {
-      if (!availableIds.has(id)) {
-        this.selectedProductIds.delete(id);
+    this.selectedCartItemKeys.forEach(key => {
+      if (!availableKeys.has(key)) {
+        this.selectedCartItemKeys.delete(key);
       }
     });
 
@@ -223,6 +223,14 @@ export class CartComponent implements OnInit, OnDestroy {
 
   private updateSelectedCartItems() {
     this.selectedCartItems = this.cart.filter(item => this.isSelected(item));
+  }
+
+  getItemSize(item: any) {
+    return String(item?.selectedSize || item?.size || '').trim();
+  }
+
+  private getCartItemKey(item: any) {
+    return `${item.id}::${this.getItemSize(item)}`;
   }
 
   /**

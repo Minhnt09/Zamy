@@ -10,6 +10,7 @@ export interface Product {
   price: number;
   color?: string;
   size?: string;
+  sizes?: string[];
   stock?: number;
   code?: string;
 }

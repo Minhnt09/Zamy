@@ -2,7 +2,6 @@ const productService = require('../services/product.service');
 
 const getAllProducts = (req, res) => {
   const data = productService.getAll();
-  console.log('GET products length:', data.length);
   return res.json({ data });
 };
 

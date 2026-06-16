@@ -7,7 +7,11 @@ export interface CartItem {
   name?: string;
   price?: number;
   qty?: number;
-  // thêm trường khác theo app của bạn
+  color?: string;
+  image?: string;
+  size?: string;
+  sizes?: string[];
+  selectedSize?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -17,11 +21,9 @@ export class CartservicesService {
   private activeCartKey = this.guestCartKey;
   private activeUserId: number | null = null;
 
-  // BehaviorSubject để đồng bộ toàn app
   private _cart$ = new BehaviorSubject<CartItem[]>([]);
   cart$ = this._cart$.asObservable();
 
-  // Favorites (giữ nguyên logic cũ)
   private favorites: any[] = [];
   private favKey = 'favorites';
 
@@ -49,16 +51,15 @@ export class CartservicesService {
     });
   }
 
-  // ---------- Persistence ----------
   private loadFromStorage() {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
       const cartJson = localStorage.getItem(this.activeCartKey);
       const favJson = localStorage.getItem(this.favKey);
-      this.cart = cartJson ? JSON.parse(cartJson) : [];
+      this.cart = cartJson ? this.normalizeCartItems(JSON.parse(cartJson)) : [];
       this.favorites = favJson ? JSON.parse(favJson) : [];
     } catch (e) {
-      console.warn('Không thể đọc localStorage:', e);
+      console.warn('Khong the doc localStorage:', e);
       this.cart = [];
       this.favorites = [];
     }
@@ -70,9 +71,9 @@ export class CartservicesService {
     try {
       localStorage.setItem(this.activeCartKey, JSON.stringify(this.cart));
     } catch (e) {
-      console.warn('Không thể lưu cart lên localStorage:', e);
+      console.warn('Khong the luu cart len localStorage:', e);
     }
-    this._cart$.next([...this.cart]); // emit copy to avoid external mutation
+    this._cart$.next([...this.cart]);
   }
 
   private saveFavoritesToStorage() {
@@ -80,7 +81,7 @@ export class CartservicesService {
     try {
       localStorage.setItem(this.favKey, JSON.stringify(this.favorites));
     } catch (e) {
-      console.warn('Không thể lưu favorites lên localStorage:', e);
+      console.warn('Khong the luu favorites len localStorage:', e);
     }
   }
 
@@ -97,11 +98,11 @@ export class CartservicesService {
 
     try {
       const userCartJson = localStorage.getItem(this.activeCartKey);
-      let nextCart: CartItem[] = userCartJson ? JSON.parse(userCartJson) : [];
+      let nextCart: CartItem[] = userCartJson ? this.normalizeCartItems(JSON.parse(userCartJson)) : [];
 
       if (user && shouldMergeGuestCart) {
         const guestCartJson = localStorage.getItem(this.guestCartKey);
-        const guestCart: CartItem[] = guestCartJson ? JSON.parse(guestCartJson) : [];
+        const guestCart: CartItem[] = guestCartJson ? this.normalizeCartItems(JSON.parse(guestCartJson)) : [];
         nextCart = this.mergeCartItems(nextCart, guestCart);
         localStorage.setItem(this.activeCartKey, JSON.stringify(nextCart));
         localStorage.removeItem(this.guestCartKey);
@@ -122,11 +123,12 @@ export class CartservicesService {
     incomingCart.forEach(item => {
       if (!item || item.id == null) return;
 
-      const idx = merged.findIndex(cartItem => cartItem.id === item.id);
+      const selectedSize = this.normalizeCartItemSize(item);
+      const idx = merged.findIndex(cartItem => this.isSameCartItem(cartItem, item.id, selectedSize));
       const qty = item.qty && item.qty > 0 ? item.qty : 1;
 
       if (idx === -1) {
-        merged.push({ ...item, qty });
+        merged.push({ ...item, selectedSize, size: selectedSize, qty });
       } else {
         merged[idx] = {
           ...merged[idx],
@@ -138,7 +140,6 @@ export class CartservicesService {
     return merged;
   }
 
-  // ---------- CART API ----------
   attachCartToCurrentUser() {
     const user = this.authService.getCurrentUser();
 
@@ -152,32 +153,36 @@ export class CartservicesService {
   }
 
   getCartItems(): CartItem[] {
-    // trả về copy để tránh thay đổi trực tiếp từ component
     return [...this.cart];
   }
 
-  addToCart(product: CartItem, qty = 1) {
+  addToCart(product: CartItem, qty = 1, selectedSize?: string) {
     if (!product || product.id == null) return;
-    const idx = this.cart.findIndex(i => i.id === product.id);
+
+    const itemSize = this.normalizeCartItemSize(product, selectedSize);
+    const idx = this.cart.findIndex(i => this.isSameCartItem(i, product.id, itemSize));
+
     if (idx === -1) {
-      const item: CartItem = { ...product, qty: qty };
-      this.cart.push(item);
+      this.cart.push({ ...product, selectedSize: itemSize, size: itemSize, qty });
     } else {
       this.cart[idx].qty = (this.cart[idx].qty || 0) + qty;
     }
+
     this.saveCartToStorage();
   }
 
-  // XÓA theo id (vĩnh viễn + persist)
-  removeItemById(id: string | number) {
-    const idx = this.cart.findIndex(i => i.id === id);
+  removeItem(id: string | number, selectedSize?: string) {
+    return this.removeItemById(id, selectedSize);
+  }
+
+  removeItemById(id: string | number, selectedSize?: string) {
+    const idx = this.cart.findIndex(i => this.isSameCartItem(i, id, selectedSize));
     if (idx === -1) return false;
     this.cart.splice(idx, 1);
     this.saveCartToStorage();
     return true;
   }
 
-  // XÓA theo index (nếu bạn vẫn muốn)
   removeItemByIndex(index: number) {
     if (index < 0 || index >= this.cart.length) return false;
     this.cart.splice(index, 1);
@@ -185,14 +190,19 @@ export class CartservicesService {
     return true;
   }
 
-  updateItemQuantity(id: string | number, qty: number) {
-    const idx = this.cart.findIndex(i => i.id === id);
+  updateItemQuantity(id: string | number, selectedSize: string | number, qty?: number) {
+    const nextQty = qty ?? Number(selectedSize);
+    const itemSize = qty === undefined ? undefined : String(selectedSize);
+    const idx = this.cart.findIndex(i => this.isSameCartItem(i, id, itemSize));
+
     if (idx === -1) return false;
-    if (qty <= 0) {
+
+    if (nextQty <= 0) {
       this.cart.splice(idx, 1);
     } else {
-      this.cart[idx].qty = qty;
+      this.cart[idx].qty = nextQty;
     }
+
     this.saveCartToStorage();
     return true;
   }
@@ -202,16 +212,15 @@ export class CartservicesService {
     this.saveCartToStorage();
   }
 
-  // ---------- FAVORITES (giữ lại, minor fixes) ----------
   addToFavorite(product: any) {
     if (!product || product.id == null) return;
     const exists = this.favorites.find((item: any) => item.id === product.id);
     if (!exists) {
       this.favorites.push(product);
       this.saveFavoritesToStorage();
-      console.log('Đã thêm vào danh sách yêu thích:', product);
+      console.log('Da them vao danh sach yeu thich:', product);
     } else {
-      console.log('Sản phẩm đã có trong danh sách yêu thích');
+      console.log('San pham da co trong danh sach yeu thich');
     }
   }
 
@@ -225,5 +234,25 @@ export class CartservicesService {
       this.favorites.splice(idx, 1);
       this.saveFavoritesToStorage();
     }
+  }
+
+  private normalizeCartItems(items: CartItem[]) {
+    if (!Array.isArray(items)) return [];
+
+    return items
+      .filter(item => item && item.id != null)
+      .map(item => {
+        const selectedSize = this.normalizeCartItemSize(item);
+        const qty = item.qty && item.qty > 0 ? item.qty : 1;
+        return { ...item, selectedSize, size: selectedSize, qty };
+      });
+  }
+
+  private normalizeCartItemSize(item: CartItem, selectedSize?: string) {
+    return String(selectedSize || item.selectedSize || item.size || '').trim();
+  }
+
+  private isSameCartItem(item: CartItem, id: string | number, selectedSize?: string) {
+    return item.id === id && this.normalizeCartItemSize(item) === String(selectedSize || '').trim();
   }
 }
