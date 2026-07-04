@@ -18,8 +18,24 @@
 
     <!-- RIGHT – Icons (Desktop) -->
     <div class="hidden md:flex items-center gap-6">
-      <img (click)="goFavorite()" src="/assets/icon/heart1.png" class="w-[36px] cursor-pointer">
-      <img (click)="goCart()" src="/assets/icon/giohang.png" class="w-[36px] cursor-pointer">
+      <button type="button" (click)="goFavorite()" class="relative w-[36px] h-[36px] p-0 border-0 bg-transparent cursor-pointer">
+        <img src="/assets/icon/heart1.png" class="w-full h-full object-contain" alt="favorites">
+        <span
+          *ngIf="(favoriteCount$ | async)?.length as favoriteCount"
+          class="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#8A5252] text-white text-[11px] leading-[18px] text-center font-semibold"
+        >
+          {{ favoriteCount }}
+        </span>
+      </button>
+      <button type="button" (click)="goCart()" class="relative w-[36px] h-[36px] p-0 border-0 bg-transparent cursor-pointer">
+        <img src="/assets/icon/giohang.png" class="w-full h-full object-contain" alt="cart">
+        <span
+          *ngIf="cartCount$ | async as cartCount"
+          class="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#8A5252] text-white text-[11px] leading-[18px] text-center font-semibold"
+        >
+          {{ cartCount }}
+        </span>
+      </button>
       <img src="/assets/icon/thongbao1.png" class="w-[34px] cursor-pointer">
 
       <img (click)="openSearch()" src="/assets/icon/timkiem3.png" class="w-[28px] cursor-pointer">
@@ -82,8 +98,24 @@
 
   <!-- ICONS -->
   <div class="flex items-center gap-6">
-    <img (click)="goFavorite()" src="/assets/icon/heart1.png" class="w-[28px]">
-    <img (click)="goCart()" src="/assets/icon/giohang.png" class="w-[28px]">
+    <button type="button" (click)="goFavorite()" class="relative w-[28px] h-[28px] p-0 border-0 bg-transparent cursor-pointer">
+      <img src="/assets/icon/heart1.png" class="w-full h-full object-contain" alt="favorites">
+      <span
+        *ngIf="(favoriteCount$ | async)?.length as favoriteCount"
+        class="absolute -top-2 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#8A5252] text-white text-[10px] leading-[16px] text-center font-semibold"
+      >
+        {{ favoriteCount }}
+      </span>
+    </button>
+    <button type="button" (click)="goCart()" class="relative w-[28px] h-[28px] p-0 border-0 bg-transparent cursor-pointer">
+      <img src="/assets/icon/giohang.png" class="w-full h-full object-contain" alt="cart">
+      <span
+        *ngIf="cartCount$ | async as cartCount"
+        class="absolute -top-2 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#8A5252] text-white text-[10px] leading-[16px] text-center font-semibold"
+      >
+        {{ cartCount }}
+      </span>
+    </button>
     <img (click)="openSearch()" src="/assets/icon/timkiem3.png" class="w-[26px]">
     <button
       *ngIf="currentUser; else mobileGuestLogin"

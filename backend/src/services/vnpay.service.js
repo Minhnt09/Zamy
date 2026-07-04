@@ -3,13 +3,11 @@ const qs = require('qs');
 
 function sortObject(obj) {
   const sorted = {};
+  const keys = Object.keys(obj).map(key => encodeURIComponent(key)).sort();
 
-  Object.keys(obj)
-    .sort()
-    .forEach((key) => {
-      sorted[key] = obj[key];
-    });
-
+  keys.forEach(key => {
+    sorted[key] = encodeURIComponent(obj[key]).replace(/%20/g, '+');
+  });
   return sorted;
 }
 

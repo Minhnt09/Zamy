@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { map, Observable } from 'rxjs';
 import { AuthService, AuthUser } from '../../../features/services/auth.service';
+import { CartservicesService } from '../../../features/services/cartservices.service';
 import { LoginPopupComponent } from '../login-popup/login-popup.component';
 import { SearchPopupComponent } from '../search-popup/search-popup.component';
 
@@ -22,12 +24,19 @@ export class NavbarComponent {
   isMobileMenuOpen = false;
   showLogin = false;
   isSearchOpen = false;
+  favoriteCount$: Observable<any[]>;
+  cartCount$: Observable<number>;
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    public authService: AuthService
+    public authService: AuthService,
+    private cartService: CartservicesService
   ) {
+    this.favoriteCount$ = this.cartService.favorites$;
+    this.cartCount$ = this.cartService.cart$.pipe(
+      map(items => items.reduce((total, item) => total + (Number(item.qty) || 1), 0))
+    );
     this.authService.loadCurrentUser();
   }
 

@@ -26,6 +26,8 @@ export class CartservicesService {
 
   private favorites: any[] = [];
   private favKey = 'favorites';
+  private _favorites$ = new BehaviorSubject<any[]>([]);
+  favorites$ = this._favorites$.asObservable();
 
   constructor(private authService: AuthService) {
     const currentUser = this.authService.getCurrentUser();
@@ -64,6 +66,7 @@ export class CartservicesService {
       this.favorites = [];
     }
     this._cart$.next([...this.cart]);
+    this._favorites$.next([...this.favorites]);
   }
 
   private saveCartToStorage() {
@@ -83,6 +86,7 @@ export class CartservicesService {
     } catch (e) {
       console.warn('Khong the luu favorites len localStorage:', e);
     }
+    this._favorites$.next([...this.favorites]);
   }
 
   private getCartStorageKey(user: AuthUser | null) {
