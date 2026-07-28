@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
 
 export type CreateOrderPayload = {
   customer: {
@@ -12,7 +13,7 @@ export type CreateOrderPayload = {
   };
   paymentMethod?: 'cod' | 'vnpay';
   shippingFee?: number;
-  items: { productId: number; qty: number }[];
+  items: { productId: number; qty: number; size: string }[];
 };
 
 @Injectable({
@@ -21,13 +22,21 @@ export type CreateOrderPayload = {
 export class OrderService {
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
 
   createOrder(payload: CreateOrderPayload): Observable<any>{
-    return this.http.post(`${this.baseUrl}/orders`, payload);
+    return this.http.post(`${this.baseUrl}/orders`, payload, { headers: this.authHeaders() });
   }
 
   getOrderByCode(orderCode: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/orders/${orderCode}`);
+    return this.http.get(`${this.baseUrl}/orders/${orderCode}`, { headers: this.authHeaders() });
+  }
+
+  private authHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 }

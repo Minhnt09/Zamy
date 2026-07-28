@@ -90,7 +90,13 @@
     {{ loadError }}
   </p>
 
-  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+  <div *ngIf="loading" class="bg-white shadow-md rounded-lg p-6 animate-pulse" aria-label="Đang tải danh sách sản phẩm">
+    <div class="h-8 w-full rounded bg-gray-200"></div>
+    <div class="mt-4 h-8 w-full rounded bg-gray-200"></div>
+    <div class="mt-4 h-8 w-full rounded bg-gray-200"></div>
+  </div>
+
+  <div *ngIf="!loading" class="bg-white shadow-md rounded-lg overflow-hidden">
     <table class="w-full">
       <thead class="bg-gray-200">
         <tr class="text-left">

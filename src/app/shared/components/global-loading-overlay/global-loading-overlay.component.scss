@@ -1,0 +1,5 @@
+.loading-overlay { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 1.5rem; background: rgb(0 0 0 / 42%); }
+.loading-card { width: min(100%, 26rem); text-align: center; border-radius: 1rem; padding: 2rem; background: #f7ebe4; color: #3a2929; box-shadow: 0 18px 50px rgb(0 0 0 / 25%); }
+.loading-logo { width: 4rem; height: 4rem; object-fit: contain; margin: 0 auto 1rem; }
+.loading-spinner { display: block; width: 2.6rem; height: 2.6rem; margin: 0 auto 1rem; border: .3rem solid #d8bbb0; border-top-color: #8a5252; border-radius: 50%; animation: loading-spin .8s linear infinite; }
+h2 { margin: 0; font-size: 1.25rem; font-weight: 700; } p { margin: .65rem 0 0; line-height: 1.5; } button { margin-top: 1rem; padding: .65rem 1rem; border-radius: .5rem; background: #8a5252; color: white; font-weight: 600; } @keyframes loading-spin { to { transform: rotate(360deg); } }

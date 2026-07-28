@@ -12,15 +12,18 @@ import { ProductService } from '../../../features/services/product.service';
 })
 export class HighlightProductsComponent {
   product: any[] = [];
+  loading = true;
 
   constructor(private productService: ProductService) {}
   ngOnInit() {
     this.productService.getAllProducts().subscribe({
       next: (data) => {
         this.product = data;
+        this.loading = false;
       },
       error: (error) => {
         console.error('Lỗi khi lấy sản phẩm:', error);
+        this.loading = false;
       }
     });
   }

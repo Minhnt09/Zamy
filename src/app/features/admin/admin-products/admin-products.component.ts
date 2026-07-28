@@ -22,6 +22,7 @@ export class AdminProductsComponent implements OnInit {
   productErrors: any = {};
   submitError = '';
   loadError = '';
+  loading = false;
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -43,15 +44,18 @@ export class AdminProductsComponent implements OnInit {
   }
 
   loadProducts() {
+    this.loading = true;
     this.http.get<any>(this.api).subscribe({
       next: (res) => {
         console.log('Products response:', res);
         this.products = res.data;
         this.loadError = '';
+        this.loading = false;
       },
       error: (err) => {
         console.error('Load products error:', err);
         this.loadError = 'Không tải được danh sách sản phẩm';
+        this.loading = false;
       }
     });
   }

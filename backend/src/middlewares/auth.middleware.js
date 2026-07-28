@@ -1,8 +1,12 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'my_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-const verifyAdmin = (req, res, next) => {
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET must be configured');
+}
+
+const requireAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -15,13 +19,6 @@ const verifyAdmin = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-
-    if (decoded.role !== 'admin') {
-      return res.status(403).json({
-        error: 'Bạn không có quyền admin'
-      });
-    }
-
     req.user = decoded;
     next();
   } catch (error) {
@@ -31,6 +28,17 @@ const verifyAdmin = (req, res, next) => {
   }
 };
 
+const verifyAdmin = (req, res, next) => {
+  requireAuth(req, res, () => {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Bạn không có quyền admin' });
+    }
+
+    next();
+  });
+};
+
 module.exports = {
+  requireAuth,
   verifyAdmin
 };

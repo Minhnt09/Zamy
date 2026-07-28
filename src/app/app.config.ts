@@ -2,9 +2,10 @@ import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
+import { backendStartupInterceptor } from './core/http/backend-startup.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,7 +21,7 @@ export const appConfig: ApplicationConfig = {
 
     provideAnimations(),
 
-    provideHttpClient(),   // ✅ BẮT BUỘC để gọi backend API
+    provideHttpClient(withInterceptors([backendStartupInterceptor])),
 
     provideClientHydration(withEventReplay())
   ]

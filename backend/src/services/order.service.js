@@ -10,8 +10,12 @@ function geneateOrderCode() {
     return `ZAMY-${y}${m}${day}-${running}`;
 }
 
-function createOrder(payload) {
-    const { customer, items, paymentMethod = 'cod', shippingFee = 0 } = payload;
+function createOrder(payload, userId) {
+  const { customer, items, paymentMethod = 'cod', shippingFee = 0 } = payload;
+
+  if (!Number.isInteger(Number(userId)) || Number(userId) <= 0) {
+    return { status: 401, error: 'Bạn chưa đăng nhập' };
+  }
 
     if (!customer?.name || !customer?.phone || !customer?.address) {
         return { status: 400, error: 'Thieu thong tin khach hang' };
@@ -71,6 +75,7 @@ function createOrder(payload) {
     const newOrder = {
         id: orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 : 1,
         orderCode: geneateOrderCode(),
+        userId: Number(userId),
         customer,
         items: orderItems,
         total,

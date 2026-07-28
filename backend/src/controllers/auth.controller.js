@@ -1,9 +1,13 @@
 const jwt = require('jsonwebtoken');
 const userService = require('../services/user.service');
 
-const ADMIN_EMAIL = 'admin@gmail.com';
-const ADMIN_PASSWORD = 'admin123';
-const JWT_SECRET = process.env.JWT_SECRET || 'my_secret_key';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD || !JWT_SECRET) {
+  throw new Error('ADMIN_EMAIL, ADMIN_PASSWORD, and JWT_SECRET must be configured');
+}
 
 const loginAdmin = (req, res) => {
   const { email, password } = req.body;

@@ -8,11 +8,12 @@ const {
   updateOrderStatus,
   vnpayReturn,
 } = require('../controllers/order.controller');
+const { requireAuth, verifyAdmin } = require('../middlewares/auth.middleware');
 
-router.post('/', createOrder);
+router.post('/', requireAuth, createOrder);
 router.get('/vnpay-return', vnpayReturn);          
-router.get('/:code', getOrderByCode);  
-router.get('/', getAllOrders);         
-router.patch('/:code/status', updateOrderStatus); 
+router.get('/:code', requireAuth, getOrderByCode);
+router.get('/', verifyAdmin, getAllOrders);
+router.patch('/:code/status', verifyAdmin, updateOrderStatus);
 
 module.exports = router;

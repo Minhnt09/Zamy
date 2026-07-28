@@ -2,7 +2,7 @@ const orderService = require('../services/order.service');
 const { createVnpayPaymentUrl } = require('../services/vnpay.service');
 
 const createOrder = (req, res) => {
-  const result = orderService.createOrder(req.body);
+  const result = orderService.createOrder(req.body, req.user.id);
   if (result.error) {
     return res.status(result.status || 400).json({ error: result.error });
   }
@@ -35,6 +35,11 @@ const getOrderByCode = (req, res) => {
   const { code } = req.params;
   const result = orderService.getOrderByCode(code);
   if (result.error) return res.status(result.status || 404).json({ error: result.error });
+
+  if (req.user.role !== 'admin' && result.data.userId !== req.user.id) {
+    return res.status(403).json({ error: 'Bạn không có quyền xem đơn hàng này' });
+  }
+
   return res.json({ data: result.data });
 };
 
