@@ -53,8 +53,6 @@
       <ng-template #guestLogin>
         <img (click)="openLogin()" src="/assets/icon/user1.png" class="w-[36px] cursor-pointer">
       </ng-template>
-      <app-login-popup *ngIf="showLogin" (closePopup)="closeLogin()"></app-login-popup>
-
       <app-search-popup
         *ngIf="isSearchOpen"
         [isSearchOpen]="isSearchOpen"
@@ -68,6 +66,12 @@
     </div>
   </div>
 </nav>
+
+<app-login-popup
+  *ngIf="showLogin"
+  [notice]="loginNotice"
+  (closePopup)="closeLogin()">
+</app-login-popup>
 
 <!-- Spacer -->
 <div class="h-[80px]"></div>

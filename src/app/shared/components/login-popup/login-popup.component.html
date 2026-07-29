@@ -18,6 +18,15 @@
       {{ isLoginMode ? 'Đăng nhập' : 'Tạo tài khoản' }}
     </h2>
 
+    <div
+      *ngIf="notice"
+      class="mb-5 flex gap-3 rounded-xl border border-[#D9A441] bg-[#FFF8E7] px-4 py-3 text-sm leading-5 text-[#7A5410]"
+      role="status"
+    >
+      <span aria-hidden="true" class="text-lg leading-5">!</span>
+      <p>{{ notice }}</p>
+    </div>
+
     <div class="grid grid-cols-2 gap-2 bg-[#F7EBE4] rounded-xl p-1 mb-6">
       <button
         type="button"

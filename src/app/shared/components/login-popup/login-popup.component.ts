@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../features/services/auth.service';
@@ -15,6 +15,7 @@ type AuthMode = 'login' | 'register';
   styleUrl: './login-popup.component.scss'
 })
 export class LoginPopupComponent {
+  @Input() notice = '';
   @Output() closePopup = new EventEmitter<void>();
 
   mode: AuthMode = 'login';

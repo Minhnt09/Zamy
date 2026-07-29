@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-admin-products',
@@ -24,7 +25,11 @@ export class AdminProductsComponent implements OnInit {
   loadError = '';
   loading = false;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private notification: NotificationService
+  ) {}
 
   ngOnInit() {
     this.loadProducts();
@@ -114,7 +119,7 @@ export class AdminProductsComponent implements OnInit {
   addProduct() {
     this.http.post(this.api, this.buildProductPayload(), this.getAuthHeaders()).subscribe({
       next: () => {
-        alert('Tạo sản phẩm thành công');
+        this.notification.success('Tạo sản phẩm thành công.');
         this.loadProducts();
         this.newProduct = this.getEmptyProduct();
         this.productErrors = {};

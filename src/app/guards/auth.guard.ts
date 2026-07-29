@@ -13,6 +13,7 @@ export const authGuard: CanActivateFn = (_route, state) => {
   return router.createUrlTree(['/home'], {
     queryParams: {
       login: '1',
+      reason: 'purchase-required',
       returnUrl: state.url,
     },
   });

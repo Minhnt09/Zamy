@@ -24,6 +24,7 @@ export class NavbarComponent {
   isMobileMenuOpen = false;
   showLogin = false;
   isSearchOpen = false;
+  loginNotice = '';
   favoriteCount$: Observable<any[]>;
   cartCount$: Observable<number>;
 
@@ -43,6 +44,9 @@ export class NavbarComponent {
   ngOnInit() {
     this.route.queryParamMap.subscribe(params => {
       if (params.get('login') === '1' && !this.currentUser) {
+        this.loginNotice = params.get('reason') === 'purchase-required'
+          ? 'Vui lòng đăng nhập hoặc đăng ký để mua hàng.'
+          : '';
         this.showLogin = true;
       }
     });
@@ -61,16 +65,18 @@ export class NavbarComponent {
   }
 
   openLogin() {
+    this.loginNotice = '';
     this.showLogin = true;
   }
 
   closeLogin() {
     this.showLogin = false;
+    this.loginNotice = '';
 
     if (!this.currentUser && this.route.snapshot.queryParamMap.get('login') === '1') {
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { login: null, returnUrl: null },
+        queryParams: { login: null, reason: null, returnUrl: null },
         queryParamsHandling: 'merge',
       });
     }

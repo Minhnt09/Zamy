@@ -7,6 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CartservicesService } from '../services/cartservices.service';
 import { HighlightProductsComponent } from "../../shared/components/highlight-products/highlight-products.component";
 import { CheckoutService } from '../services/checkout.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -29,6 +30,7 @@ export class ProductDetailComponent {
     private cartService: CartservicesService,
     private router: Router,
     private checkoutService: CheckoutService,
+    private notification: NotificationService,
   ) {}
 
   ngOnInit() {
@@ -61,13 +63,13 @@ export class ProductDetailComponent {
     if (!this.ensureSizeSelected()) return;
 
     this.cartService.addToCart(this.product, this.quantity, this.selectedSize);
-    alert('San pham da duoc them vao gio hang!');
+    this.notification.success('Đã thêm sản phẩm vào giỏ hàng.');
   }
 
   addToFavorite() {
     if (!this.product) return;
     this.cartService.addToFavorite(this.product);
-    alert('Da them vao yeu thich');
+    this.notification.success('Đã thêm sản phẩm vào danh sách yêu thích.');
   }
 
   buyNow() {
@@ -109,12 +111,12 @@ export class ProductDetailComponent {
     const sizes = this.getProductSizes();
 
     if (sizes.length === 0) {
-      alert('San pham chua co size');
+      this.notification.warning('Sản phẩm hiện chưa có size để chọn.');
       return false;
     }
 
     if (!this.selectedSize) {
-      alert('Vui lòng chọn size');
+      this.notification.warning('Vui lòng chọn size trước khi mua hàng.');
       return false;
     }
 

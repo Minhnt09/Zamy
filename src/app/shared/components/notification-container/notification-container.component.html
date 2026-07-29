@@ -1,0 +1,16 @@
+<div class="notification-container" aria-live="polite" aria-atomic="true">
+  <div
+    *ngFor="let notification of notificationService.notifications()"
+    class="notification"
+    [class.notification--success]="notification.type === 'success'"
+    [class.notification--warning]="notification.type === 'warning'"
+    [class.notification--error]="notification.type === 'error'"
+    role="status"
+  >
+    <span class="notification__icon" aria-hidden="true">
+      {{ notification.type === 'success' ? '✓' : notification.type === 'warning' ? '!' : '×' }}
+    </span>
+    <p>{{ notification.message }}</p>
+    <button type="button" (click)="dismiss(notification)" aria-label="Đóng thông báo">×</button>
+  </div>
+</div>

@@ -3,6 +3,7 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar.component
 import { CartservicesService } from '../services/cartservices.service';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CommonModule } from '@angular/common';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-favorites',
@@ -14,7 +15,10 @@ import { CommonModule } from '@angular/common';
 export class FavoritesComponent implements OnInit {
   favorites: any[] = [];
 
-  constructor(private cartService: CartservicesService) {}
+  constructor(
+    private cartService: CartservicesService,
+    private notification: NotificationService
+  ) {}
 
   ngOnInit() {
     this.loadFavorites();
@@ -38,6 +42,6 @@ export class FavoritesComponent implements OnInit {
       ? product.sizes[0]
       : product.size;
     this.cartService.addToCart(product, 1, selectedSize);
-    alert('Đã thêm sản phẩm yêu thích vào giỏ hàng');
+    this.notification.success('Đã thêm sản phẩm yêu thích vào giỏ hàng.');
   }
 }

@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { FooterComponent } from "../../shared/components/footer/footer.component";
 import { CheckoutService } from '../services/checkout.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-cart',
@@ -24,7 +25,8 @@ export class CartComponent implements OnInit, OnDestroy {
   constructor(
     private cartService: CartservicesService,
     private checkoutService: CheckoutService,
-    private router: Router
+    private router: Router,
+    private notification: NotificationService
   ) { }
 
   ngOnInit() {
@@ -61,7 +63,7 @@ export class CartComponent implements OnInit, OnDestroy {
     const selectedItems = this.selectedCartItems;
 
     if (selectedItems.length === 0) {
-      alert('Vui lòng chọn sản phẩm cần đặt hàng');
+      this.notification.warning('Vui lòng chọn sản phẩm cần đặt hàng.');
       return;
     }
 
