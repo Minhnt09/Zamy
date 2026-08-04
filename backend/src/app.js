@@ -7,8 +7,21 @@ const routes = require("./routes");
 // const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
+const configuredOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+const developmentOrigins = process.env.NODE_ENV === 'production'
+    ? []
+    : ['http://localhost:4200', 'http://127.0.0.1:4200'];
+const allowedOrigins = new Set([...developmentOrigins, ...configuredOrigins]);
 
-app.use(cors());
+app.use(cors({
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+        return callback(new Error('Origin is not allowed by CORS'));
+    }
+}));
 app.use(express.json());
 
 // Keep this before application routes so uptime monitors and the web client can

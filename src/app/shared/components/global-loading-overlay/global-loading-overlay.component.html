@@ -1,15 +1,7 @@
 <div *ngIf="isVisible()" class="loading-overlay" role="status" aria-live="polite" aria-atomic="true">
-  <section class="loading-card" [class.loading-card--error]="backendStatus.hasStartupProblem()">
+  <section class="loading-card">
     <img src="/assets/icon/logo.png" alt="Zamy" class="loading-logo">
-    <ng-container *ngIf="!backendStatus.hasStartupProblem(); else errorState">
-      <span class="loading-spinner" aria-hidden="true"></span>
-      <h2>Starting server…</h2>
-      <p>Please wait… This can take up to 30 seconds when the server is waking up.</p>
-    </ng-container>
-    <ng-template #errorState>
-      <h2>Server is unavailable</h2>
-      <p>{{ backendStatus.startupError() }}</p>
-      <button type="button" (click)="backendStatus.retryBackend()">Try again</button>
-    </ng-template>
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <h2>Đang xử lý…</h2>
   </section>
 </div>
