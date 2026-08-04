@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SearchPopupComponent } from './search-popup.component';
+import { testProviders } from '../../../testing/test-providers';
 
 describe('SearchPopupComponent', () => {
   let component: SearchPopupComponent;
@@ -8,7 +9,8 @@ describe('SearchPopupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SearchPopupComponent]
+      imports: [SearchPopupComponent],
+      providers: testProviders
     })
     .compileComponents();
 

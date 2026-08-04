@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ReturnPolicyComponent } from './return-policy.component';
+import { testProviders } from '../../testing/test-providers';
 
 describe('ReturnPolicyComponent', () => {
   let component: ReturnPolicyComponent;
@@ -8,7 +9,8 @@ describe('ReturnPolicyComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ReturnPolicyComponent]
+      imports: [ReturnPolicyComponent],
+      providers: testProviders
     })
     .compileComponents();
 

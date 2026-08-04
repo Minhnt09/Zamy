@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HighlightProductsComponent } from './highlight-products.component';
+import { testProviders } from '../../../testing/test-providers';
 
 
 describe('HighlightProductsComponent', () => {
@@ -7,7 +8,8 @@ describe('HighlightProductsComponent', () => {
   let fixture: ComponentFixture<HighlightProductsComponent>;
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HighlightProductsComponent]
+      imports: [HighlightProductsComponent],
+      providers: testProviders
     })
     .compileComponents();
 

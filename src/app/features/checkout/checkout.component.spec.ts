@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CheckoutComponent } from './checkout.component';
+import { testProviders } from '../../testing/test-providers';
 
 describe('CheckoutComponent', () => {
   let component: CheckoutComponent;
@@ -8,7 +9,8 @@ describe('CheckoutComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CheckoutComponent]
+      imports: [CheckoutComponent],
+      providers: testProviders
     })
     .compileComponents();
 
