@@ -5,7 +5,6 @@ export const adminGuard: CanActivateFn = () => {
   const router = inject(Router);
   const token = localStorage.getItem('adminToken');
 
-  console.log('Admin guard chạy, token =', token);
 
   if (token) {
     return true;
