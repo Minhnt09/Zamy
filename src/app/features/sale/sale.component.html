@@ -172,6 +172,12 @@
         </select>
       </div>
 
+      <app-product-loading-state
+        [loading]="loading"
+        [hasData]="products.length > 0"
+        [errorMessage]="errorMessage"
+        (retryRequested)="retry()"
+      ></app-product-loading-state>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
         <div
           class="p-2 transition hover:scale-[1.02] lg:hover:scale-105"
@@ -214,7 +220,7 @@
       </div>
 
       <div
-        *ngIf="filteredProducts.length === 0"
+        *ngIf="!loading && !errorMessage && filteredProducts.length === 0"
         class="text-center text-[#8A5252] text-lg mt-10"
       >
         Không tìm thấy sản phẩm phù hợp

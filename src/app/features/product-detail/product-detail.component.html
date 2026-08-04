@@ -1,7 +1,7 @@
 <app-navbar></app-navbar>
 
 <!-- Loading -->
-<div *ngIf="loading" class="bg-[#F7EBE4] font-[poppins] px-4 md:px-20 py-10 animate-pulse" aria-label="Đang tải sản phẩm">
+<div *ngIf="loading && !product" class="bg-[#F7EBE4] font-[poppins] px-4 md:px-20 py-10 animate-pulse" aria-label="Đang tải sản phẩm">
   <div class="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2">
     <div class="aspect-[3/4] rounded-lg bg-[#e6d6ce]"></div>
     <div class="space-y-5 pt-4"><div class="h-9 w-3/4 rounded bg-[#e6d6ce]"></div><div class="h-6 w-1/3 rounded bg-[#e6d6ce]"></div><div class="h-12 w-1/2 rounded bg-[#e6d6ce]"></div><div class="h-10 w-full rounded bg-[#e6d6ce]"></div></div>
@@ -9,7 +9,7 @@
 </div>
 
 <!-- Content -->
-<div *ngIf="!loading && product as p" class="bg-[#F7EBE4] font-[poppins] px-4 md:px-20 py-6 md:py-10">
+<div *ngIf="product as p" class="bg-[#F7EBE4] font-[poppins] px-4 md:px-20 py-6 md:py-10">
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
     <!-- CỘT TRÁI - HÌNH ẢNH -->
     <div class="flex gap-3 md:gap-6">
@@ -116,7 +116,8 @@
 
 <!-- Not found -->
 <div *ngIf="!loading && !product" class="bg-[#F7EBE4] font-[poppins] px-4 md:px-20 py-10">
-  <p class="text-[18px] md:text-[22px] font-semibold">Không tìm thấy sản phẩm.</p>
+  <p class="text-[18px] md:text-[22px] font-semibold">{{ errorMessage || 'Không tìm thấy sản phẩm.' }}</p>
+  <button *ngIf="errorMessage" type="button" (click)="retry()" class="mt-4 rounded-md bg-[#8A5252] px-4 py-2 font-medium text-white">Thử lại</button>
 </div>
 
 <app-highlight-products></app-highlight-products>

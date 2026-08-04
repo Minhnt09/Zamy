@@ -5,6 +5,7 @@ import { HttpClientModule, HttpClient, HttpHeaders } from '@angular/common/http'
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../../core/services/notification.service';
+import { blockingLoadingContext } from '../../../core/http/loading-context';
 
 @Component({
   selector: 'app-admin-products',
@@ -117,7 +118,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   addProduct() {
-    this.http.post(this.api, this.buildProductPayload(), this.getAuthHeaders()).subscribe({
+    this.http.post(this.api, this.buildProductPayload(), this.blockingAuthOptions()).subscribe({
       next: () => {
         this.notification.success('Tạo sản phẩm thành công.');
         this.loadProducts();
@@ -148,7 +149,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   updateProduct() {
-    this.http.put(`${this.api}/${this.editingId}`, this.buildProductPayload(), this.getAuthHeaders()).subscribe({
+    this.http.put(`${this.api}/${this.editingId}`, this.buildProductPayload(), this.blockingAuthOptions()).subscribe({
       next: () => {
         this.loadProducts();
         this.cancelEdit();
@@ -168,7 +169,7 @@ export class AdminProductsComponent implements OnInit {
 
   deleteProduct(id: number) {
     if (confirm('Delete product?')) {
-      this.http.delete(this.api + '/' + id, this.getAuthHeaders()).subscribe({
+      this.http.delete(this.api + '/' + id, this.blockingAuthOptions()).subscribe({
         next: () => {
           this.loadProducts();
         },
@@ -193,6 +194,10 @@ export class AdminProductsComponent implements OnInit {
         Authorization: `Bearer ${token}`
       })
     };
+  }
+
+  private blockingAuthOptions() {
+    return { ...this.getAuthHeaders(), context: blockingLoadingContext() };
   }
 
   private buildProductPayload() {

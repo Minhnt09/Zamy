@@ -19,6 +19,8 @@ import { NotificationService } from '../../core/services/notification.service';
 export class ProductDetailComponent {
   product: any = null;
   loading = true;
+  errorMessage: string | null = null;
+  private productId?: number;
   quantity = 1;
   selectedSize = '';
 
@@ -38,24 +40,37 @@ export class ProductDetailComponent {
       const id = params.get('id');
       if (!id) {
         this.loading = false;
+        this.errorMessage = 'Không tìm thấy sản phẩm.';
         return;
       }
 
-      this.loading = true;
-      this.productService.getProductById(+id).subscribe({
+      this.productId = +id;
+      this.loadProduct();
+    });
+  }
+
+  retry(): void {
+    if (this.productId == null) return;
+    this.productService.invalidateProducts();
+    this.loadProduct();
+  }
+
+  private loadProduct(): void {
+    if (this.productId == null) return;
+    this.loading = !this.product;
+    this.errorMessage = null;
+    this.productService.getProductById(this.productId).subscribe({
         next: (data) => {
           this.product = data;
           this.quantity = 1;
           this.selectedSize = '';
           this.loading = false;
         },
-        error: (error) => {
-          console.error('Loi khi lay san pham:', error);
-          this.product = null;
+        error: () => {
+          this.errorMessage = 'Không thể tải sản phẩm. Vui lòng thử lại.';
           this.loading = false;
         }
       });
-    });
   }
 
   addToCart() {

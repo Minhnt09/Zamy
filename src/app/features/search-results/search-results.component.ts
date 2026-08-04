@@ -19,6 +19,7 @@ export class SearchResultsComponent implements OnInit {
   products: any[] = [];
   filteredProducts: any[] = [];
   loading = false;
+  errorMessage: string | null = null;
   currentPage = 1;
   pageSize = 6;
   readonly pageSizeOptions = [6, 12, 18, 24];
@@ -46,7 +47,8 @@ export class SearchResultsComponent implements OnInit {
   }
 
   loadProducts() {
-    this.loading = true;
+    this.loading = this.products.length === 0;
+    this.errorMessage = null;
 
     this.productService.getAllProducts().subscribe({
       next: (data) => {
@@ -54,14 +56,14 @@ export class SearchResultsComponent implements OnInit {
         this.loading = false;
         this.applySearch();
       },
-      error: (error) => {
-        console.error('Search results error:', error);
-        this.products = [];
-        this.filteredProducts = [];
+      error: () => {
+        this.errorMessage = 'Không thể tải sản phẩm. Vui lòng thử lại.';
         this.loading = false;
       }
     });
   }
+
+  retry(): void { this.productService.invalidateProducts(); this.loadProducts(); }
 
   submitSearch() {
     const keyword = this.keyword.trim();

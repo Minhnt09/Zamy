@@ -38,7 +38,6 @@ export class NavbarComponent {
     this.cartCount$ = this.cartService.cart$.pipe(
       map(items => items.reduce((total, item) => total + (Number(item.qty) || 1), 0))
     );
-    this.authService.loadCurrentUser();
   }
 
   ngOnInit() {

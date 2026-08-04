@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
+import { blockingLoadingContext } from '../../core/http/loading-context';
 
 export type CreateOrderPayload = {
   customer: {
@@ -28,7 +29,10 @@ export class OrderService {
   ) { }
 
   createOrder(payload: CreateOrderPayload): Observable<any>{
-    return this.http.post(`${this.baseUrl}/orders`, payload, { headers: this.authHeaders() });
+    return this.http.post(`${this.baseUrl}/orders`, payload, {
+      headers: this.authHeaders(),
+      context: blockingLoadingContext()
+    });
   }
 
   getOrderByCode(orderCode: string): Observable<any> {

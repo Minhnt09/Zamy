@@ -2,29 +2,29 @@ import { Injectable, computed, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class GlobalLoadingService {
-  private activeRequests = 0;
-  private visibleRequests = signal(0);
+  private activeBlockingActions = 0;
+  private visibleBlockingActions = signal(0);
   private showTimer?: ReturnType<typeof setTimeout>;
-  readonly isLoading = computed(() => this.visibleRequests() > 0);
+  readonly isLoading = computed(() => this.visibleBlockingActions() > 0);
 
-  begin(): void {
-    this.activeRequests += 1;
-    if (this.activeRequests === 1) {
+  beginBlocking(): void {
+    this.activeBlockingActions += 1;
+    if (this.activeBlockingActions === 1) {
       this.showTimer = setTimeout(() => {
         this.showTimer = undefined;
-        if (this.activeRequests > 0) this.visibleRequests.set(this.activeRequests);
+        if (this.activeBlockingActions > 0) this.visibleBlockingActions.set(this.activeBlockingActions);
       }, 180);
     }
   }
 
-  end(): void {
-    this.activeRequests = Math.max(0, this.activeRequests - 1);
-    if (this.activeRequests === 0) {
+  endBlocking(): void {
+    this.activeBlockingActions = Math.max(0, this.activeBlockingActions - 1);
+    if (this.activeBlockingActions === 0) {
       if (this.showTimer) clearTimeout(this.showTimer);
       this.showTimer = undefined;
-      this.visibleRequests.set(0);
-    } else if (this.visibleRequests() > 0) {
-      this.visibleRequests.set(this.activeRequests);
+      this.visibleBlockingActions.set(0);
+    } else if (this.visibleBlockingActions() > 0) {
+      this.visibleBlockingActions.set(this.activeBlockingActions);
     }
   }
 }

@@ -6,6 +6,7 @@ import { ProductFilterComponent } from '../../shared/components/product-filter/p
 import { HighlightProductsComponent } from '../../shared/components/highlight-products/highlight-products.component';
 import { ProductCardComponent } from '../../shared/components/product-card/product-card.component';
 import { ProductService } from '../services/product.service';
+import { ProductLoadingStateComponent } from '../../shared/components/product-loading-state/product-loading-state.component';
 @Component({
   selector: 'app-dress',
   imports: [NavbarComponent, 
@@ -13,7 +14,8 @@ import { ProductService } from '../services/product.service';
             FooterComponent, 
             ProductFilterComponent, 
             HighlightProductsComponent,
-            ProductCardComponent
+            ProductCardComponent,
+            ProductLoadingStateComponent
           ],
   standalone: true,
   templateUrl: './dress.component.html',
@@ -21,16 +23,26 @@ import { ProductService } from '../services/product.service';
 })
 export class DressComponent {
   product: any[] = [];
+  loading = true;
+  errorMessage: string | null = null;
 
   constructor(private productService: ProductService) {}
-  ngOnInit() {
+  ngOnInit() { this.loadProducts(); }
+
+  loadProducts() {
+    this.loading = this.product.length === 0;
+    this.errorMessage = null;
     this.productService.getAllProducts().subscribe({
       next: (data) => {
         this.product = data;
+        this.loading = false;
       },
-      error: (error) => {
-        console.error('Lỗi khi lấy sản phẩm:', error);
+      error: () => {
+        this.errorMessage = 'Không thể tải sản phẩm. Vui lòng thử lại.';
+        this.loading = false;
       }
     });
   }
+
+  retry() { this.productService.invalidateProducts(); this.loadProducts(); }
 }

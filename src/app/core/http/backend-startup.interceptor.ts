@@ -3,6 +3,7 @@ import { defer, finalize, retry, throwError, timer, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { inject } from '@angular/core';
 import { GlobalLoadingService } from '../services/global-loading.service';
+import { BLOCKING_LOADING } from './loading-context';
 
 const RETRYABLE_METHODS = new Set(['GET', 'HEAD']);
 const RETRYABLE_STATUSES = new Set([408, 429, 502, 503, 504]);
@@ -34,14 +35,23 @@ function offlineError(requestUrl: string): HttpErrorResponse {
 export const backendStartupInterceptor: HttpInterceptorFn = (request, next) => {
   if (!isApiRequest(request.url)) return next(request);
 
-  if (!RETRYABLE_METHODS.has(request.method)) {
-    const loading = inject(GlobalLoadingService);
-    return defer(() => {
-      loading.begin();
-      return next(request).pipe(finalize(() => loading.end()));
-    });
-  }
+  const isSafeRead = RETRYABLE_METHODS.has(request.method);
+  const request$ = isSafeRead
+    ? createReadRequest(request, next)
+    : next(request).pipe(timeout(REQUEST_TIMEOUT_MS));
 
+  if (!request.context.get(BLOCKING_LOADING)) return request$;
+
+  const loading = inject(GlobalLoadingService);
+  return defer(() => {
+    loading.beginBlocking();
+    return request$.pipe(finalize(() => loading.endBlocking()));
+  });
+};
+
+export const coldStartRequestPolicy = { timeoutMs: REQUEST_TIMEOUT_MS, retryDelaysMs: RETRY_DELAYS_MS };
+
+function createReadRequest(request: Parameters<HttpInterceptorFn>[0], next: Parameters<HttpInterceptorFn>[1]) {
   if (!isOnline()) return throwError(() => offlineError(request.url));
 
   return next(request).pipe(
@@ -53,6 +63,4 @@ export const backendStartupInterceptor: HttpInterceptorFn = (request, next) => {
         : throwError(() => error)
     })
   );
-};
-
-export const coldStartRequestPolicy = { timeoutMs: REQUEST_TIMEOUT_MS, retryDelaysMs: RETRY_DELAYS_MS };
+}

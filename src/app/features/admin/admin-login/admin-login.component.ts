@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { blockingLoadingContext } from '../../../core/http/loading-context';
 
 @Component({
   selector: 'app-admin-login',
@@ -33,7 +34,7 @@ export class AdminLoginComponent {
     this.http.post<any>(this.loginApi, {
       email,
       password
-    }).subscribe({
+    }, { context: blockingLoadingContext() }).subscribe({
       next: (res) => {
         localStorage.setItem('adminToken', res.token);
         localStorage.setItem('adminUser', JSON.stringify(res.user));

@@ -22,7 +22,13 @@
       </div>
 
       <!-- Product grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+      <app-product-loading-state
+        [loading]="loading"
+        [hasData]="product.length > 0"
+        [errorMessage]="errorMessage"
+        (retryRequested)="retry()"
+      ></app-product-loading-state>
+      <div *ngIf="product.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
         <app-product-card
           *ngFor="let item of product | slice:14:18"
           [product]="item"

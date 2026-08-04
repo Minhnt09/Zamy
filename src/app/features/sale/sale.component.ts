@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { HighlightProductsComponent } from '../../shared/components/highlight-products/highlight-products.component';
 import { ProductService } from '../services/product.service';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
+import { ProductLoadingStateComponent } from '../../shared/components/product-loading-state/product-loading-state.component';
 
 @Component({
   selector: 'app-sale',
@@ -17,6 +18,7 @@ import { PaginationComponent } from '../../shared/components/pagination/paginati
     RouterModule,
     HighlightProductsComponent,
     PaginationComponent,
+    ProductLoadingStateComponent,
   ],
   templateUrl: './sale.component.html',
   styleUrl: './sale.component.scss'
@@ -38,6 +40,8 @@ export class SaleComponent implements OnInit {
 
   selectedColors: string[] = [];
   selectedSizes: string[] = [];
+  loading = true;
+  errorMessage: string | null = null;
 
   constructor(private productService: ProductService) {}
 
@@ -47,6 +51,12 @@ export class SaleComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadProducts();
+  }
+
+  loadProducts(): void {
+    this.loading = this.products.length === 0;
+    this.errorMessage = null;
     this.productService.getAllProducts().subscribe({
       next: (data: any[]) => {
         this.products = Array.isArray(data) ? data : [];
@@ -56,12 +66,16 @@ export class SaleComponent implements OnInit {
           this.maxPrice = Math.max(...this.products.map(item => item.price || 0));
           this.selectedPrice = this.maxPrice;
         }
+        this.loading = false;
       },
-      error: (error) => {
-        console.error('Lỗi khi lấy sản phẩm:', error);
+      error: () => {
+        this.errorMessage = 'Không thể tải sản phẩm. Vui lòng thử lại.';
+        this.loading = false;
       }
     });
   }
+
+  retry(): void { this.productService.invalidateProducts(); this.loadProducts(); }
 
   togglePanel(panel: 'color' | 'size' | 'form') {
     if (panel === 'color') this.showColor = !this.showColor;
