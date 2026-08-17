@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { sanitizeLogMessage } = require('../utils/sanitizeLogMessage');
 
 const TIMEOUT_MS = 15 * 60 * 1000;
 const BATCH_SIZE = 50;
@@ -22,7 +23,7 @@ async function expirePendingVnpayPayments() {
   const cutoff = new Date(Date.now() - TIMEOUT_MS);
   const payments = await prisma.payment.findMany({
     where: { provider: 'VNPAY', status: 'PENDING', createdAt: { lte: cutoff }, order: { status: 'PENDING' } },
-    select: { id: true, transactionRef: true }, orderBy: { createdAt: 'asc' }, take: BATCH_SIZE,
+    select: { id: true, transactionRef: true, order: { select: { orderCode: true } } }, orderBy: { createdAt: 'asc' }, take: BATCH_SIZE,
   });
   let cancelled = 0;
   let skipped = 0;
@@ -33,7 +34,14 @@ async function expirePendingVnpayPayments() {
       else skipped += 1;
     } catch (error) {
       failed += 1;
-      console.warn('VNPay timeout job failed', { paymentId: payment.id, transactionRef: payment.transactionRef });
+      console.warn('VNPay timeout job failed', {
+        paymentId: payment.id,
+        transactionRef: payment.transactionRef,
+        orderCode: payment.order.orderCode,
+        errorName: error?.name || 'Error',
+        errorMessage: sanitizeLogMessage(error?.message),
+        ...(error?.code ? { errorCode: error.code } : {}),
+      });
     }
   }
   return { scanned: payments.length, cancelled, skipped, failed };
