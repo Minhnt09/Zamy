@@ -30,7 +30,7 @@ const requireAuth = (req, res, next) => {
 
 const verifyAdmin = (req, res, next) => {
   requireAuth(req, res, () => {
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== 'admin' && req.user.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Bạn không có quyền admin' });
     }
 

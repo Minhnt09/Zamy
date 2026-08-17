@@ -1,36 +1,44 @@
 const productService = require('../services/product.service');
 
-const getAllProducts = (req, res) => {
-  const data = productService.getAll();
-  return res.json({ data });
+const getAllProducts = async (req, res, next) => {
+  try {
+    const data = await productService.getAll();
+    return res.json({ data });
+  } catch (error) {
+    return next(error);
+  }
 };
 
-const getProductById = (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const product = productService.getById(id);
+const getProductById = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const product = await productService.getById(id);
 
-  if (!product) return res.status(404).json({ error: 'Product not found' });
-  return res.json({ data: product });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    return res.json({ data: product });
+  } catch (error) {
+    return next(error);
+  }
 };
 
-const createProduct = (req, res) => {
-  const result = productService.create(req.body);
+const createProduct = async (req, res) => {
+  const result = await productService.create(req.body);
   if (result.error) return res.status(result.status || 400).json({ error: result.error });
 
   return res.status(201).json({ message: 'Tạo sản phẩm thành công', data: result.data });
 };
 
-const updateProduct = (req, res) => {
+const updateProduct = async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const result = productService.update(id, req.body);
+  const result = await productService.update(id, req.body);
 
   if (result.error) return res.status(result.status || 400).json({ error: result.error });
   return res.json({ message: 'Cập nhật sản phẩm thành công', data: result.data });
 };
 
-const deleteProduct = (req, res) => {
+const deleteProduct = async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const result = productService.remove(id);
+  const result = await productService.remove(id);
 
   if (result.error) return res.status(result.status || 404).json({ error: result.error });
   return res.json({ message: 'Xóa sản phẩm thành công', data: result.data });

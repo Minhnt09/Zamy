@@ -34,9 +34,9 @@ function createVnpayPaymentUrl(order, ipAddr) {
     vnp_Version: '2.1.0',
     vnp_Command: 'pay',
     vnp_TmnCode: tmnCode,
-    vnp_Amount: order.grandTotal * 100,
+    vnp_Amount: order.payment.amount * 100,
     vnp_CurrCode: 'VND',
-    vnp_TxnRef: order.orderCode,
+    vnp_TxnRef: order.payment.transactionRef,
     vnp_OrderInfo: `Thanh toan don hang ${order.orderCode}`,
     vnp_OrderType: 'other',
     vnp_Locale: 'vn',
@@ -56,6 +56,20 @@ function createVnpayPaymentUrl(order, ipAddr) {
   return `${vnpUrl}?${qs.stringify(vnpParams, { encode: false })}`;
 }
 
+function verifyVnpaySignature(params) {
+  const suppliedHash = String(params?.vnp_SecureHash || '');
+  if (!suppliedHash || !process.env.VNPAY_HASH_SECRET) return false;
+  const signedParams = { ...params };
+  delete signedParams.vnp_SecureHash;
+  delete signedParams.vnp_SecureHashType;
+  const canonical = qs.stringify(sortObject(signedParams), { encode: false });
+  const expected = crypto.createHmac('sha512', process.env.VNPAY_HASH_SECRET).update(Buffer.from(canonical, 'utf-8')).digest('hex');
+  const actualBuffer = Buffer.from(suppliedHash, 'hex');
+  const expectedBuffer = Buffer.from(expected, 'hex');
+  return actualBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(actualBuffer, expectedBuffer);
+}
+
 module.exports = {
   createVnpayPaymentUrl,
+  verifyVnpaySignature,
 };

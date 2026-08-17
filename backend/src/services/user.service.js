@@ -1,83 +1,116 @@
 const crypto = require('crypto');
-const users = require('../data/user.data');
+const prisma = require('../lib/prisma');
 
+const PASSWORD_ITERATIONS = 210000;
+const PASSWORD_KEY_LENGTH = 64;
+const PASSWORD_DIGEST = 'sha512';
+const PASSWORD_PREFIX = 'pbkdf2';
+
+class UserInputError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+const toApiRole = (role) => role === 'ADMIN' ? 'admin' : 'user';
 const publicUser = (user) => ({
   id: user.id,
   name: user.name,
   email: user.email,
-  role: user.role
+  role: toApiRole(user.role),
 });
 
-const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+function derivePassword(password, salt, iterations = PASSWORD_ITERATIONS) {
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(String(password), salt, iterations, PASSWORD_KEY_LENGTH, PASSWORD_DIGEST, (error, hash) => {
+      if (error) return reject(error);
+      resolve(hash);
+    });
+  });
+}
 
-const hashPassword = (password, salt = crypto.randomBytes(16).toString('hex')) => {
-  const hash = crypto
-    .pbkdf2Sync(String(password), salt, 100000, 64, 'sha512')
-    .toString('hex');
+async function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = await derivePassword(password, salt);
+  return `${PASSWORD_PREFIX}$${PASSWORD_ITERATIONS}$${salt}$${hash.toString('hex')}`;
+}
 
-  return { salt, hash };
-};
+async function verifyPassword(password, passwordHash) {
+  const [prefix, iterationsText, salt, expectedHash] = String(passwordHash || '').split('$');
+  const iterations = Number(iterationsText);
 
-const verifyPassword = (password, user) => {
-  const { hash } = hashPassword(password, user.passwordSalt);
-  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(user.passwordHash));
-};
-
-const createUser = ({ name, email, password }) => {
-  const normalizedEmail = normalizeEmail(email);
-
-  if (!name || !normalizedEmail || !password) {
-    return { status: 400, error: 'Vui lòng nhập đầy đủ họ tên, email và mật khẩu' };
+  if (prefix !== PASSWORD_PREFIX || !Number.isInteger(iterations) || iterations <= 0 || !salt || !expectedHash) {
+    return false;
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-    return { status: 400, error: 'Email không hợp lệ' };
+  const actualHash = await derivePassword(password, salt, iterations);
+  const expectedBuffer = Buffer.from(expectedHash, 'hex');
+  return expectedBuffer.length === actualHash.length && crypto.timingSafeEqual(actualHash, expectedBuffer);
+}
+
+function validateRegistration(payload) {
+  const name = String(payload?.name || '').trim();
+  const email = normalizeEmail(payload?.email);
+  const password = String(payload?.password || '');
+
+  if (!name || !email || !password) {
+    throw new UserInputError(400, 'Vui lòng nhập đầy đủ họ tên, email và mật khẩu');
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new UserInputError(400, 'Email không hợp lệ');
+  }
+  if (password.length < 6) {
+    throw new UserInputError(400, 'Mật khẩu phải có ít nhất 6 ký tự');
   }
 
-  if (String(password).length < 6) {
-    return { status: 400, error: 'Mật khẩu phải có ít nhất 6 ký tự' };
+  return { name, email, password };
+}
+
+function toServiceError(error) {
+  if (error instanceof UserInputError) return { status: error.status, error: error.message };
+  if (error?.code === 'P2002') return { status: 409, error: 'Email đã được đăng ký' };
+  return { status: 500, error: 'Không thể xử lý tài khoản' };
+}
+
+async function createUser(payload) {
+  try {
+    const input = validateRegistration(payload);
+    const existedUser = await prisma.user.findUnique({ where: { email: input.email } });
+    if (existedUser) return { status: 409, error: 'Email đã được đăng ký' };
+
+    const passwordHash = await hashPassword(input.password);
+    const user = await prisma.user.create({
+      data: { name: input.name, email: input.email, passwordHash, role: 'CUSTOMER' },
+    });
+    return { data: publicUser(user) };
+  } catch (error) {
+    return toServiceError(error);
   }
+}
 
-  const existedUser = users.find(user => user.email === normalizedEmail);
+async function authenticateUser(payload) {
+  const email = normalizeEmail(payload?.email);
+  const password = String(payload?.password || '');
 
-  if (existedUser) {
-    return { status: 409, error: 'Email đã được đăng ký' };
+  if (!email || !password) return { status: 401, error: 'Sai email hoặc mật khẩu' };
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !(await verifyPassword(password, user.passwordHash))) {
+      return { status: 401, error: 'Sai email hoặc mật khẩu' };
+    }
+    return { data: publicUser(user) };
+  } catch (error) {
+    return toServiceError(error);
   }
+}
 
-  const { salt, hash } = hashPassword(password);
-  const user = {
-    id: users.length ? Math.max(...users.map(item => item.id)) + 1 : 1,
-    name: String(name).trim(),
-    email: normalizedEmail,
-    passwordSalt: salt,
-    passwordHash: hash,
-    role: 'user',
-    createdAt: new Date().toISOString()
-  };
-
-  users.push(user);
-
-  return { data: publicUser(user) };
-};
-
-const authenticateUser = ({ email, password }) => {
-  const normalizedEmail = normalizeEmail(email);
-  const user = users.find(item => item.email === normalizedEmail);
-
-  if (!user || !verifyPassword(password, user)) {
-    return { status: 401, error: 'Sai email hoặc mật khẩu' };
-  }
-
-  return { data: publicUser(user) };
-};
-
-const getUserById = (id) => {
-  const user = users.find(item => item.id === Number(id));
+async function getUserById(id) {
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) return null;
+  const user = await prisma.user.findUnique({ where: { id: Number(id) } });
   return user ? publicUser(user) : null;
-};
+}
 
-module.exports = {
-  createUser,
-  authenticateUser,
-  getUserById
-};
+module.exports = { createUser, authenticateUser, getUserById, hashPassword, normalizeEmail };
