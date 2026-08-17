@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: zamy-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zamy_dev
+      POSTGRES_USER: zamy_dev_user
+      POSTGRES_PASSWORD: zamy_dev_password_change_me
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - zamy_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zamy_dev_user -d zamy_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  zamy_postgres_data:
+    name: zamy_postgres_data

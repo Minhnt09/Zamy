@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  COD
+  VNPAY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id         Int              @id @default(autoincrement())
+  code       String           @unique
+  name       String
+  price      Int
+  color      String
+  image      String
+  categoryId Int              @map("category_id")
+  isActive   Boolean          @default(true) @map("is_active")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+  category   Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  variants   ProductVariant[]
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+model ProductVariant {
+  id            Int         @id @default(autoincrement())
+  productId     Int         @map("product_id")
+  size          String
+  sku           String      @unique
+  stockQuantity Int         @map("stock_quantity")
+  isActive      Boolean     @default(true) @map("is_active")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+
+  @@unique([productId, size])
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         UserRole  @default(CUSTOMER)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  cart         Cart?
+  orders       Order[]
+
+  @@map("users")
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique @map("user_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items     CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id               Int            @id @default(autoincrement())
+  cartId           Int            @map("cart_id")
+  productVariantId Int            @map("product_variant_id")
+  quantity         Int
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  cart             Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+
+  @@unique([cartId, productVariantId])
+  @@index([productVariantId])
+  @@map("cart_items")
+}
+
+model Order {
+  id             Int         @id @default(autoincrement())
+  orderCode      String      @unique @map("order_code")
+  userId         Int         @map("user_id")
+  recipientName  String      @map("recipient_name")
+  recipientPhone String      @map("recipient_phone")
+  recipientEmail String?     @map("recipient_email")
+  shippingAddress String     @map("shipping_address")
+  subtotal       Int
+  shippingFee    Int         @map("shipping_fee")
+  grandTotal     Int         @map("grand_total")
+  status         OrderStatus @default(PENDING)
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  user           User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items          OrderItem[]
+  payments       Payment[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id               Int            @id @default(autoincrement())
+  orderId          Int            @map("order_id")
+  productVariantId Int            @map("product_variant_id")
+  productName      String         @map("product_name")
+  variantSku       String         @map("variant_sku")
+  size             String
+  unitPrice        Int            @map("unit_price")
+  quantity         Int
+  lineTotal        Int            @map("line_total")
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productVariantId])
+  @@map("order_items")
+}
+
+model Payment {
+  id                    Int             @id @default(autoincrement())
+  orderId               Int             @map("order_id")
+  provider              PaymentProvider
+  amount                Int
+  status                PaymentStatus   @default(PENDING)
+  transactionRef        String          @unique @map("transaction_ref")
+  providerTransactionId String?         @unique @map("provider_transaction_id")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+  order                 Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([status])
+  @@map("payments")
+}
+
+// PostgreSQL CHECK constraints are not expressible in the Prisma schema:
+// - product_variants.stock_quantity >= 0
+// - cart_items.quantity > 0
+// - order_items.quantity > 0
+// They must be added in a later SQL migration and enforced in service validation.
