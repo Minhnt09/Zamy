@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -41,18 +41,22 @@ export class HighlightProductsComponent {
     if (error instanceof HttpErrorResponse && error.error?.code === 'OFFLINE') return 'Bạn đang ngoại tuyến. Vui lòng kiểm tra kết nối mạng.';
     return 'Không thể tải sản phẩm. Vui lòng thử lại.';
   }
-  @ViewChild('carousel') carousel: any;
+  @ViewChild('carousel') carousel?: ElementRef<HTMLElement>;
 
   scrollLeft() {
-    this.carousel.nativeElement.scrollBy({
-      left: -200,
-      behavior: 'smooth'
-    });
+    this.scrollCarousel(-1);
   }
 
   scrollRight() {
-    this.carousel.nativeElement.scrollBy({
-      left: 200,
+    this.scrollCarousel(1);
+  }
+
+  private scrollCarousel(direction: 1 | -1): void {
+    const carousel = this.carousel?.nativeElement;
+    if (!carousel) return;
+
+    carousel.scrollBy({
+      left: direction * carousel.clientWidth * 0.8,
       behavior: 'smooth'
     });
   }

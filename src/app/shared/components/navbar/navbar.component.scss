@@ -1,5 +1,5 @@
 .nav-item {
-  @apply relative text-[26px] font-semibold cursor-pointer;
+  @apply relative text-[17px] md:text-[26px] font-semibold cursor-pointer;
 }
 
 .nav-item::after {
@@ -11,5 +11,4 @@
 .nav-item:hover::after {
   @apply w-full;
 }
-
 

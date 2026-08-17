@@ -1,0 +1,23 @@
+@media (max-width: 767px) {
+  .follow-us-heading {
+    animation: footer-heading-enter 420ms ease-out both;
+  }
+
+  .footer-content button,
+  .footer-content a {
+    font-size: 14px;
+  }
+
+  .footer-content > div > p:first-child {
+    font-size: 15px;
+  }
+}
+
+@keyframes footer-heading-enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .follow-us-heading { animation: none; }
+}

@@ -2,47 +2,43 @@
 
 <!-- TITLE -->
 <div
-  class="bg-[#F7EBE4] text-center
+  class="home-collection bg-[#F7EBE4] text-center
          text-[22px] sm:text-[28px] md:text-[40px]
-         text-[#8A5252] font-semibold py-4">
+         text-[#8A5252] font-semibold px-4 pt-6 pb-3 md:py-4">
   BỘ SƯU TẬP
 </div>
 
 <!-- ===== MOBILE SLIDER ===== -->
-<div class="bg-[#F7EBE4] md:hidden overflow-hidden">
+<div class="bg-[#F7EBE4] md:hidden px-4 pb-0 overflow-hidden">
   <div
-    class="flex overflow-x-auto scroll-smooth
+    #bannerCarousel
+    class="collection-carousel flex overflow-x-auto scroll-smooth
            snap-x snap-mandatory
-           scrollbar-hide">
+"
+    (scroll)="onBannerScroll()"
+    (pointerdown)="pauseBannerAutoplay()"
+    (pointerup)="resumeBannerAutoplay()"
+    (pointercancel)="resumeBannerAutoplay()">
 
-    <div class="min-w-full snap-center">
+    <div *ngFor="let banner of banners" class="min-w-full snap-center">
       <img
-        src="/assets/img/banner2.png"
-        class="w-full h-[200px] object-cover"
+        [src]="banner"
+        class="w-full aspect-[16/7] object-cover object-center rounded-md"
       />
     </div>
+  </div>
 
-    <div class="min-w-full snap-center">
-      <img
-        src="/assets/img/banner1.png"
-        class="w-full h-[200px] object-cover"
-      />
-    </div>
-
-    <div class="min-w-full snap-center">
-      <img
-        src="/assets/img/banner3.png"
-        class="w-full h-[200px] object-cover"
-      />
-    </div>
-
-    <div class="min-w-full snap-center">
-      <img
-        src="/assets/img/banner4.png"
-        class="w-full h-[200px] object-cover"
-      />
-    </div>
-
+  <div class="mt-2 flex justify-center gap-2" aria-label="Chọn banner">
+    <button
+      *ngFor="let banner of banners; index as index"
+      type="button"
+      [attr.aria-label]="'Xem banner ' + (index + 1)"
+      [attr.aria-current]="bannerIndex === index ? 'true' : null"
+      (click)="goToBanner(index)"
+      class="h-1.5 w-1.5 rounded-full bg-[#8A5252] transition-opacity duration-300"
+      [class.opacity-100]="bannerIndex === index"
+      [class.opacity-30]="bannerIndex !== index">
+    </button>
   </div>
 </div>
 
