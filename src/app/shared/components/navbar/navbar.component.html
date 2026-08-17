@@ -1,9 +1,9 @@
-<nav class="fixed top-0 left-0 w-full h-[80px] bg-[#E8DCD1] shadow-sm z-50">
-  <div class="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
+<nav class="fixed top-0 left-0 w-full h-[64px] md:h-[80px] bg-[#E8DCD1] shadow-sm z-50">
+  <div class="max-w-[1600px] mx-auto h-full px-4 md:px-6 flex items-center justify-between">
 
     <!-- LEFT – Logo -->
     <a (click)="goHome()" class="cursor-pointer flex items-center">
-      <img src="/assets/icon/logo.svg" alt="logo" class="w-[70px]">
+      <img src="/assets/icon/logo.svg" alt="logo" class="w-[64px] md:w-[70px]">
     </a>
 
     <!-- CENTER – Menu (Desktop) -->
@@ -62,7 +62,7 @@
 
     <!-- Mobile Hamburger -->
     <div class="md:hidden flex items-center">
-      <button class="text-3xl" (click)="toggleMenu()">☰</button>
+      <button type="button" aria-label="Mở menu" class="flex h-10 w-10 items-center justify-center text-[28px] leading-none text-[#8A5252]" (click)="toggleMenu()">☰</button>
     </div>
   </div>
 </nav>
@@ -74,7 +74,7 @@
 </app-login-popup>
 
 <!-- Spacer -->
-<div class="h-[80px]"></div>
+<div class="h-[64px] md:h-[80px]"></div>
 
 <!-- MOBILE OVERLAY -->
 <div

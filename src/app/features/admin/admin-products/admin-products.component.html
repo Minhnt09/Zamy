@@ -38,7 +38,7 @@
       </div>
 
       <div>
-        <input class="border p-2 rounded w-full" [(ngModel)]="newProduct.code" placeholder="Code" />
+        <input class="border p-2 rounded w-full disabled:bg-gray-100" [(ngModel)]="newProduct.code" [disabled]="editingId !== null" placeholder="Code" />
         <p *ngIf="productErrors.code" class="text-red-600 text-sm mt-1">
           {{ productErrors.code }}
         </p>
@@ -52,16 +52,12 @@
       </div>
 
       <div>
-        <input class="border p-2 rounded w-full" [(ngModel)]="newProduct.sizes" placeholder="Sizes: S, M, L" />
-        <p *ngIf="productErrors.size" class="text-red-600 text-sm mt-1">
-          {{ productErrors.size }}
-        </p>
-      </div>
-
-      <div>
-        <input class="border p-2 rounded w-full" type="number" [(ngModel)]="newProduct.stock" placeholder="Stock" />
-        <p *ngIf="productErrors.stock" class="text-red-600 text-sm mt-1">
-          {{ productErrors.stock }}
+        <select class="border p-2 rounded w-full" [(ngModel)]="newProduct.category">
+          <option value="">Select category</option>
+          <option *ngFor="let category of categories" [value]="category.slug">{{ category.label }}</option>
+        </select>
+        <p *ngIf="productErrors.category" class="text-red-600 text-sm mt-1">
+          {{ productErrors.category }}
         </p>
       </div>
 
@@ -79,6 +75,28 @@
       >
         Cancel
       </button>
+    </div>
+
+    <div class="mt-5 border-t pt-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-medium">Variants theo size</h3>
+        <button (click)="addVariant()" type="button" class="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-800">Thêm size</button>
+      </div>
+      <div *ngFor="let variant of newProduct.variants; let i = index" class="grid grid-cols-3 gap-3 mb-2 max-w-2xl">
+        <div>
+          <select class="border p-2 rounded w-full" [(ngModel)]="variant.size">
+            <option value="">Select size</option>
+            <option *ngFor="let size of sizeOptions" [value]="size">{{ size }}</option>
+          </select>
+          <p *ngIf="productErrors['variantSize' + i]" class="text-red-600 text-sm mt-1">{{ productErrors['variantSize' + i] }}</p>
+        </div>
+        <div>
+          <input class="border p-2 rounded w-full" type="number" min="0" step="1" [(ngModel)]="variant.stock" placeholder="Stock" />
+          <p *ngIf="productErrors['variantStock' + i]" class="text-red-600 text-sm mt-1">{{ productErrors['variantStock' + i] }}</p>
+        </div>
+        <button (click)="removeVariant(i)" type="button" [disabled]="newProduct.variants.length === 1" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 disabled:opacity-40">Xoá size</button>
+      </div>
+      <p *ngIf="productErrors.variants" class="text-red-600 text-sm mt-1">{{ productErrors.variants }}</p>
     </div>
 
     <p *ngIf="submitError" class="text-red-600 text-sm font-medium mt-4">
@@ -106,6 +124,7 @@
           <th class="p-3">Price</th>
           <th class="p-3">Code</th>
           <th class="p-3">Color</th>
+          <th class="p-3">Category</th>
           <th class="p-3">Sizes</th>
           <th class="p-3">Stock</th>
           <th class="p-3">Action</th>
@@ -128,6 +147,7 @@
 
           <td class="p-3">{{ p.code }}</td>
           <td class="p-3">{{ p.color }}</td>
+          <td class="p-3">{{ p.category }}</td>
           <td class="p-3">{{ p.sizes?.join(', ') || p.size }}</td>
           <td class="p-3">{{ p.stock }}</td>
 
@@ -143,7 +163,7 @@
               (click)="deleteProduct(p.id)"
               class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
             >
-              Delete
+              Deactivate
             </button>
           </td>
         </tr>
