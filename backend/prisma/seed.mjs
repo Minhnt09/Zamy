@@ -1,7 +1,9 @@
 import "dotenv/config";
 import { createRequire } from "node:module";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import prismaClientPkg from "@prisma/client";
+
+const { PrismaClient } = prismaClientPkg;
 
 const require = createRequire(import.meta.url);
 const mockProducts = require("../src/data/product.data.js");
