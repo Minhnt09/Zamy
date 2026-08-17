@@ -180,6 +180,9 @@ async function main() {
         });
       }
     }
+  }, {
+    maxWait: 10000,
+    timeout: 30000,
   });
 
   console.log("Seed completed: 4 categories, 20 products, 51 product variants.");
