@@ -1,8 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
-import { FooterComponent } from '../../shared/components/footer/footer.component';
 
 type SizeRow = {
   size: string;
@@ -15,7 +13,7 @@ type SizeRow = {
 @Component({
   selector: 'app-size-guide',
   standalone: true,
-  imports: [CommonModule, RouterModule, NavbarComponent, FooterComponent],
+  imports: [CommonModule, RouterModule],
   templateUrl: './size-guide.component.html',
 })
 export class SizeGuideComponent {

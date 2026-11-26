@@ -1,0 +1,24 @@
+name: Frontend Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Run Angular tests in Chrome
+        run: npm test -- --browsers=ChromeHeadless --watch=false --progress=false
+        env:
+          CHROME_BIN: /usr/bin/google-chrome

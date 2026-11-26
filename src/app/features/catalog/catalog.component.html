@@ -1,0 +1,58 @@
+<main class="store-page">
+  <h1 class="store-title">{{ title }}</h1>
+  @if (isSearch) {
+    <label for="catalog-query" class="store-label">Tìm theo tên, mã, màu hoặc kích cỡ</label>
+    <input id="catalog-query" type="search" class="store-input mb-5 max-w-xl" [value]="keyword" (change)="change('keyword', $event)" (keydown.enter)="change('keyword', $event)">
+  }
+
+  @if (!loading && !error) {
+    <details open class="store-panel mb-5">
+      <summary class="cursor-pointer font-semibold">Bộ lọc và sắp xếp</summary>
+      <div class="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label class="store-label" for="catalog-color">Màu sắc</label>
+          <select class="store-input" id="catalog-color" [value]="color" (change)="change('color', $event)">
+            <option value="">Tất cả màu</option>
+            @for (option of colors; track option) { <option [value]="option" [selected]="color === option">{{ option }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="store-label" for="catalog-size">Kích cỡ còn hàng</label>
+          <select class="store-input" id="catalog-size" [value]="size" (change)="change('size', $event)">
+            <option value="">Tất cả kích cỡ</option>
+            @for (option of sizes; track option) { <option [value]="option" [selected]="size === option">{{ option }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="store-label" for="catalog-max">Giá tối đa</label>
+          <select class="store-input" id="catalog-max" [value]="max || ''" (change)="change('max', $event)">
+            <option value="">Tất cả mức giá</option>
+            @for (option of maxOptions; track option) { <option [value]="option" [selected]="max === option">{{ option | number }} ₫</option> }
+          </select>
+        </div>
+        <div>
+          <label class="store-label" for="catalog-sort">Sắp xếp</label>
+          <select class="store-input" id="catalog-sort" [value]="sort" (change)="change('sort', $event)">
+            <option value="">Mặc định</option>
+            <option value="price-asc">Giá tăng dần</option>
+            <option value="price-desc">Giá giảm dần</option>
+            <option value="name">Tên A–Z</option>
+          </select>
+        </div>
+      </div>
+      @if (color || size || max || sort) { <a [routerLink]="[]" [queryParams]="keyword ? { keyword } : {}" class="mt-3 inline-block underline">Xóa bộ lọc</a> }
+    </details>
+    <p class="mb-4 text-sm text-stone-600" aria-live="polite">{{ results.length }} sản phẩm</p>
+  }
+  <app-product-loading-state [loading]="loading" [hasData]="results.length > 0" [errorMessage]="error || null" emptyMessage="Không tìm thấy sản phẩm phù hợp." (retryRequested)="load(true)"></app-product-loading-state>
+  <div class="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
+    @for (product of pageItems; track product.id) { <app-product-card [product]="product"></app-product-card> }
+  </div>
+  @if (pageCount > 1) {
+    <nav class="mt-8 flex items-center justify-center gap-4" aria-label="Phân trang">
+      @if (currentPage > 1) { <a [routerLink]="[]" [queryParams]="{page: currentPage - 1}" queryParamsHandling="merge" class="store-button-outline">Trang trước</a> }
+      <p>Trang {{ currentPage }} / {{ pageCount }}</p>
+      @if (currentPage < pageCount) { <a [routerLink]="[]" [queryParams]="{page: currentPage + 1}" queryParamsHandling="merge" class="store-button-outline">Trang sau</a> }
+    </nav>
+  }
+</main>

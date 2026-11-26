@@ -1,13 +1,11 @@
 import { Component } from '@angular/core';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
-import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-return-policy',
   standalone: true,
-  imports: [NavbarComponent, FooterComponent, CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './return-policy.component.html',
   styleUrl: './return-policy.component.scss'
 })

@@ -1,14 +1,14 @@
-import { Component, Input } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Product } from '../../../features/services/product.service';
+import { ProductImageComponent } from '../product-image/product-image.component';
 
 @Component({
   selector: 'app-product-card',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ProductImageComponent],
   templateUrl: './product-card.component.html',
-  styleUrl: './product-card.component.scss'
 })
 export class ProductCardComponent {
-  @Input() product: any;
+  readonly product = input.required<Product>();
 }

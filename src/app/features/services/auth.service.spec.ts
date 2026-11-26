@@ -86,4 +86,13 @@ describe('AuthService current user', () => {
     expect(service.getCurrentUser()?.name).toBe('Zamy');
     expect(service.getToken()).toBe('new-token');
   });
+  it('keeps the session and can revalidate after a temporary service error', () => {
+    localStorage.setItem('userToken', 'test-token');
+    service.loadCurrentUser().subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(service.getToken()).toBe('test-token');
+    service.loadCurrentUser().subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ user: { id: 1, name: 'Zamy' } });
+    expect(service.getCurrentUser()?.name).toBe('Zamy');
+  });
 });

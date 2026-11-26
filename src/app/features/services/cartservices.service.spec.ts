@@ -44,7 +44,7 @@ describe('CartservicesService', () => {
   afterEach(() => http.verify());
 
   it('keeps a guest cart in localStorage across service recreation', () => {
-    service.addToCart({ id: 1, name: 'Dress', price: 100, size: 'M' }, 2, 'M');
+    service.addToCart({ id: 1, name: 'Dress', price: 100, size: 'M' }, 2, 'M').subscribe();
     expect(JSON.parse(localStorage.getItem('cart') || '[]')).toEqual(jasmine.arrayContaining([
       jasmine.objectContaining({ id: 1, selectedSize: 'M', qty: 2 }),
     ]));
@@ -56,7 +56,7 @@ describe('CartservicesService', () => {
   });
 
   it('merges guest cart into DB and clears guest storage only after success', () => {
-    service.addToCart({ id: 1, name: 'Dress', price: 100, size: 'M' }, 2, 'M');
+    service.addToCart({ id: 1, name: 'Dress', price: 100, size: 'M' }, 2, 'M').subscribe();
     auth.login({ id: 9, name: 'User', email: 'user@example.test', role: 'user' });
 
     const request = http.expectOne(`${environment.apiUrl}/cart/merge`);
@@ -72,5 +72,16 @@ describe('CartservicesService', () => {
     expect(service.getCartItems()).toEqual(jasmine.arrayContaining([
       jasmine.objectContaining({ id: 1, cartItemId: 7, qty: 2, selectedSize: 'M' }),
     ]));
+  });
+  it('reports a rejected server update without adding the item', () => {
+    auth.login({ id: 9, name: 'User', email: 'user@example.test', role: 'user' });
+    http.expectOne(`${environment.apiUrl}/cart`).flush({ data: { id: 3, items: [] } });
+    const success = jasmine.createSpy('success');
+    const error = jasmine.createSpy('error');
+    service.addToCart({ id: 1, name: 'Dress', price: 100, size: 'M' }, 1).subscribe({ next: success, error });
+    http.expectOne(`${environment.apiUrl}/cart/items`).flush({ error: 'Hết hàng' }, { status: 400, statusText: 'Bad Request' });
+    expect(success).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(service.getCartItems()).toEqual([]);
   });
 });
