@@ -1,221 +1,82 @@
-<app-navbar></app-navbar>
-
-<div class="bg-[#F7EBE4] min-h-screen p-6 font-arima">
-  <div class="max-w-6xl mx-auto">
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-
-      <!-- Nút quay lại -->
-      <button type="button" (click)="goBack()">
-        <img src="/assets/icon/back.png" alt="Quay lại">
-      </button>
-
-      <div class="text-center font-medium text-[48px] mb-6 text-[#AE8989]">
-        THÔNG TIN THANH TOÁN
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-
-        <!-- Thông tin khách hàng -->
-        <div class="bg-white rounded-xl p-4 md:col-span-2">
-
-          <p class="font-bold text-[22px] mb-2">Thông tin khách hàng <span class="text-red-500">*</span></p>
-
-          <div class="p-2">
-            <nz-input-group>
-              <input
-                type="text"
-                formControlName="fullName"
-                placeholder="Nhập họ và tên"
-                maxlength="50"
-                class="w-full p-2 border rounded-lg"
-              />
-            </nz-input-group>
-            <div *ngIf="fullName?.invalid && fullName?.touched" class="text-red-500 text-xs mt-1">
-              Vui lòng nhập thông tin họ và tên!
-            </div>
-          </div>
-
-          <div class="p-2">
-            <nz-input-group>
-              <input
-                type="text"
-                formControlName="phoneNumber"
-                placeholder="Nhập số điện thoại"
-                maxlength="10"
-                class="w-full p-2 border rounded-lg"
-              />
-            </nz-input-group>
-            <div *ngIf="phoneNumber?.invalid && phoneNumber?.touched" class="text-red-500 text-xs mt-1">
-              Vui lòng nhập số điện thoại hợp lệ!
-            </div>
-          </div>
-
-          <div class="p-2">
-            <nz-input-group>
-              <input
-                type="email"
-                formControlName="email"
-                placeholder="Nhập email (Không bắt buộc)"
-                maxlength="50"
-                class="w-full p-2 border rounded-lg"
-              />
-            </nz-input-group>
-          </div>
-
-          <!-- Địa chỉ -->
-          <p class="font-bold text-[22px] mt-7 mb-2">Địa chỉ nhận hàng <span class="text-red-500">*</span></p>
-
-          <div class="p-2">
-            <select formControlName="province" class="w-full border rounded-lg p-2">
-              <option value="" disabled selected>Chọn Tỉnh/Thành phố</option>
-              <option>Hà Nội</option>
-              <option>Quảng Ninh</option>
-            </select>
-            <div *ngIf="province?.invalid && province?.touched" class="text-red-500 text-xs mt-1">
-              Vui lòng chọn Tỉnh/Thành phố!
-            </div>
-          </div>
-
-          <div class="p-2">
-            <select formControlName="district" class="w-full border rounded-lg p-2">
-              <option value="" disabled selected>Chọn Quận/Huyện</option>
-              <option>Cầu Giấy</option>
-              <option>Hạ Long</option>
-            </select>
-            <div *ngIf="district?.invalid && district?.touched" class="text-red-500 text-xs mt-1">
-              Vui lòng chọn Quận/Huyện!
-            </div>
-          </div>
-
-          <div class="p-2">
-            <nz-input-group>
-              <input
-                type="text"
-                formControlName="address"
-                placeholder="Địa chỉ chi tiết"
-                maxlength="50"
-                class="w-full border rounded-lg p-2"
-              />
-            </nz-input-group>
-            <div *ngIf="address?.invalid && address?.touched" class="text-red-500 text-xs mt-1">
-              Vui lòng nhập địa chỉ chi tiết!
-            </div>
-          </div>
-
-          <!-- Thanh toán -->
-          <p class="font-bold text-[22px] mt-7 mb-2">Phương thức thanh toán</p>
-          <label class="flex items-center border rounded-xl px-4 py-3 mb-3 cursor-pointer shadow-md">
-            <input
-              type="radio"
-              formControlName="paymentMethod"
-              value="cod"
-              class="mr-2 accent-pink-500"
-            />
-            Thanh toán khi nhận hàng
-          </label>
-
-          <label class="flex items-center border rounded-xl px-4 py-3 cursor-pointer shadow-md">
-            <input
-              type="radio"
-              formControlName="paymentMethod"
-              value="vnpay"
-              class="mr-2 accent-pink-500"
-            />
-            <img src="/assets/icon/vnpay.png" class="h-7 mr-2" />
-            VNPay QR
-          </label>
+<main class="store-page">
+  <h1 class="store-title">Thanh toán</h1>
+  @if (isCashOnDeliverySuccessVisible) {
+    <section class="store-panel max-w-xl" role="status">
+      <h2 class="text-xl font-semibold">Đã đặt hàng thành công</h2>
+      <p class="my-4">Mã đơn hàng <strong>{{ submittedOrderCode }}</strong>. Bạn sẽ thanh toán khi nhận hàng.</p>
+      <a routerLink="/home" class="store-button">Tiếp tục mua sắm</a>
+    </section>
+  } @else if (!cart.length) {
+    <section class="store-panel max-w-xl">
+      <p class="mb-4">Chọn sản phẩm trong giỏ hàng để tiếp tục thanh toán.</p>
+      <a routerLink="/cart" class="store-button">Về giỏ hàng</a>
+    </section>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <fieldset class="store-panel space-y-4" [disabled]="isSubmitting || !!submittedOrderCode">
+        <h2 class="text-xl font-semibold">Thông tin giao hàng</h2>
+        <div>
+          <label for="checkout-name" class="store-label">Họ và tên</label>
+          <input id="checkout-name" formControlName="fullName" class="store-input" autocomplete="name" [attr.aria-invalid]="form.controls.fullName.touched && form.controls.fullName.invalid" aria-describedby="checkout-name-error">
+          <p id="checkout-name-error" class="text-sm text-red-800">@if (form.controls.fullName.touched && form.controls.fullName.invalid) { Vui lòng nhập họ tên. }</p>
         </div>
-
-        <!-- Đơn hàng -->
-        <div class="flex flex-col justify-between md:col-span-1">
-
-          <div class="bg-[#AE8989] rounded-2xl p-6">
-            <p class="font-bold text-[24px] mb-4">Đơn hàng của bạn</p>
-
-            <div class="space-y-3 mb-3" *ngFor="let item of cart">
-              <div class="flex items-center gap-3">
-                <img [src]="item.image" class="w-[30%] rounded-lg" />
-                <div class="flex-1">
-                  <p class="font-semibold text-sm">{{ item.name }}</p>
-                  <p class="text-[12px] mt-1">Mã: {{ item.code }} · Size: {{ item.selectedSize || item.size }}</p>
-                </div>
-                <div class="font-semibold text-sm">{{ item.price | number }} đ</div>
-              </div>
-            </div>
-
-            <div class="flex justify-between">
-              <span>Tổng tiền</span>
-              <span>{{ getTotalPrice() | number }} đ</span>
-            </div>
-            <div class="flex justify-between">
-              <span>Phí vận chuyển</span>
-              <span>20.000 đ</span>
-            </div>
-
-            <div class="flex justify-between font-bold text-lg mt-2">
-              <span>Tổng thanh toán</span>
-              <span>{{ getTotalPrice() + 20000 | number }} đ</span>
-            </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="checkout-phone" class="store-label">Số điện thoại</label>
+            <input id="checkout-phone" formControlName="phoneNumber" class="store-input" type="tel" autocomplete="tel" [attr.aria-invalid]="form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid" aria-describedby="checkout-phone-error">
+            <p id="checkout-phone-error" class="text-sm text-red-800">@if (form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid) { Vui lòng nhập số điện thoại hợp lệ. }</p>
           </div>
-
-          <button
-            type="submit"
-            [disabled]="isSubmitting || !!submittedOrderCode"
-            class="mt-4 w-full bg-[#AE8989] text-white py-3 rounded-full text-lg font-semibold disabled:cursor-not-allowed disabled:opacity-60">
-            {{ isSubmitting ? 'Đang xử lý...' : 'Thanh toán ngay' }}
-          </button>
-
-          <div *ngIf="submitError" class="mt-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
-            {{ submitError }}
-            <a *ngIf="submittedOrderCode" routerLink="/payment-success" [queryParams]="{ orderCode: submittedOrderCode }" class="underline">
-              Xem trạng thái đơn {{ submittedOrderCode }}
-            </a>
+          <div>
+            <label for="checkout-email" class="store-label">Email (không bắt buộc)</label>
+            <input id="checkout-email" formControlName="email" class="store-input" type="email" autocomplete="email" [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid" aria-describedby="checkout-email-error">
+            <p id="checkout-email-error" class="text-sm text-red-800">@if (form.controls.email.touched && form.controls.email.invalid) { Vui lòng nhập email hợp lệ. }</p>
           </div>
         </div>
-      </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="checkout-province" class="store-label">Tỉnh / thành phố</label>
+            <input id="checkout-province" formControlName="province" class="store-input" autocomplete="address-level1" [attr.aria-invalid]="form.controls.province.touched && form.controls.province.invalid">
+            @if (form.controls.province.touched && form.controls.province.invalid) { <p class="text-sm text-red-800">Vui lòng nhập tỉnh hoặc thành phố.</p> }
+          </div>
+          <div>
+            <label for="checkout-district" class="store-label">Phường / xã</label>
+            <input id="checkout-district" formControlName="district" class="store-input" autocomplete="address-level2" [attr.aria-invalid]="form.controls.district.touched && form.controls.district.invalid">
+            @if (form.controls.district.touched && form.controls.district.invalid) { <p class="text-sm text-red-800">Vui lòng nhập phường hoặc xã.</p> }
+          </div>
+        </div>
+        <div>
+          <label for="checkout-address" class="store-label">Địa chỉ chi tiết</label>
+          <input id="checkout-address" formControlName="address" class="store-input" autocomplete="street-address" [attr.aria-invalid]="form.controls.address.touched && form.controls.address.invalid">
+          @if (form.controls.address.touched && form.controls.address.invalid) { <p class="text-sm text-red-800">Vui lòng nhập số nhà và tên đường.</p> }
+        </div>
+
+        <fieldset class="space-y-2 border-t pt-4">
+          <legend class="text-base font-semibold">Phương thức thanh toán</legend>
+          <label class="flex cursor-pointer items-center gap-3 py-2"><input type="radio" formControlName="paymentMethod" value="cod"> Thanh toán khi nhận hàng</label>
+          <label class="flex cursor-pointer items-center gap-3 py-2"><input type="radio" formControlName="paymentMethod" value="vnpay"> VNPay</label>
+        </fieldset>
+      </fieldset>
+
+      <section class="store-panel lg:sticky lg:top-24" aria-labelledby="checkout-summary">
+        <h2 id="checkout-summary" class="text-xl font-semibold">Đơn hàng của bạn</h2>
+        <ul class="my-4 space-y-3">
+          @for (item of cart; track item.id + ':' + (item.selectedSize || item.size)) {
+            <li class="flex items-start justify-between gap-3 border-b pb-3">
+              <div><p class="font-medium">{{ item.name }}</p><p class="text-sm text-stone-600">Size {{ item.selectedSize || item.size }} · ×{{ item.qty ?? 1 }}</p></div>
+              <span class="whitespace-nowrap">{{ (item.price ?? 0) * (item.qty ?? 1) | number }} ₫</span>
+            </li>
+          }
+        </ul>
+        <p class="flex justify-between"><span>Phí giao hàng</span><span>{{ shippingFee | number }} ₫</span></p>
+        <p class="my-4 flex justify-between border-t pt-4 font-semibold"><span>Tổng thanh toán</span><span>{{ total + shippingFee | number }} ₫</span></p>
+        <button type="submit" class="store-button w-full" [disabled]="isSubmitting || !!submittedOrderCode">{{ isSubmitting ? 'Đang xử lý…' : 'Xác nhận đặt hàng' }}</button>
+        @if (submitError) { <p role="alert" class="my-3 text-sm text-red-800">{{ submitError }}</p> }
+        @if (submittedOrderCode) {
+          <a routerLink="/payment-success" [queryParams]="{orderCode: submittedOrderCode}" class="mt-3 block underline">Xem trạng thái đơn {{ submittedOrderCode }}</a>
+        } @else {
+          <a routerLink="/cart" class="mt-3 block text-sm underline">Quay lại giỏ hàng</a>
+        }
+      </section>
     </form>
-  </div>
-</div>
-
-<div
-  *ngIf="isCashOnDeliverySuccessVisible"
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-  <div class="relative w-full max-w-lg bg-white rounded-2xl p-8 md:p-10 text-center font-arima shadow-2xl">
-    <button
-      type="button"
-      class="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none text-[#AE8989] transition hover:bg-[#F7EBE4]"
-      aria-label="Đóng"
-      (click)="closeCashOnDeliverySuccess()">
-      ×
-    </button>
-
-    <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#F7EBE4]">
-      <span class="text-4xl text-[#AE8989]">✓</span>
-    </div>
-
-    <h2 class="text-2xl md:text-3xl font-bold text-[#AE8989] mb-3">
-      Đặt hàng thành công!
-    </h2>
-
-    <p class="text-base md:text-lg text-gray-700 mb-4">
-      Mã đơn hàng của bạn:
-    </p>
-
-    <p class="text-2xl font-semibold text-green-600 break-all">
-      {{ cashOnDeliveryOrderCode }}
-    </p>
-
-    <p class="mt-5 text-sm md:text-base text-gray-500 leading-relaxed">
-      Zamy sẽ liên hệ xác nhận đơn hàng trong thời gian sớm nhất.
-    </p>
-
-    <button
-      type="button"
-      class="mt-8 bg-[#AE8989] text-white px-10 py-3 rounded-full text-lg hover:opacity-90 transition"
-      (click)="closeCashOnDeliverySuccess()">
-      Về trang chủ
-    </button>
-  </div>
-</div>
-
-<app-footer></app-footer>
+  }
+</main>

@@ -9,6 +9,7 @@ describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
 
   beforeEach(async () => {
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [NavbarComponent],
       providers: testProviders
@@ -26,9 +27,15 @@ describe('NavbarComponent', () => {
 
   it('opens the login panel without activating global loading', () => {
     const loading = TestBed.inject(GlobalLoadingService);
-    component.openLogin();
+    fixture.nativeElement.querySelector('button[aria-label="Đăng nhập"]').click();
+    fixture.detectChanges();
+    const dialog = fixture.nativeElement.querySelector('dialog') as HTMLDialogElement;
+    expect(dialog.open).toBeTrue();
 
     expect(component.showLogin).toBeTrue();
     expect(loading.isLoading()).toBeFalse();
+    dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('dialog')).toBeNull();
   });
 });

@@ -1,148 +1,119 @@
-import { Component, ViewChild } from '@angular/core';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
-import { FooterComponent } from '../../shared/components/footer/footer.component';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { ProductService } from '../services/product.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Meta, Title } from '@angular/platform-browser';
+import { Subject, catchError, distinctUntilChanged, finalize, map, of, startWith, switchMap } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Product, ProductService } from '../services/product.service';
 import { CartservicesService } from '../services/cartservices.service';
-import { HighlightProductsComponent } from "../../shared/components/highlight-products/highlight-products.component";
 import { CheckoutService } from '../services/checkout.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { HighlightProductsComponent } from '../../shared/components/highlight-products/highlight-products.component';
+import { ProductImageComponent } from '../../shared/components/product-image/product-image.component';
 
 @Component({
   selector: 'app-product-detail',
-  standalone: true,
-  imports: [NavbarComponent, FooterComponent, CommonModule, HighlightProductsComponent],
+  imports: [CommonModule, RouterLink, HighlightProductsComponent, ProductImageComponent],
   templateUrl: './product-detail.component.html',
-  styleUrl: './product-detail.component.scss'
 })
-export class ProductDetailComponent {
-  product: any = null;
+export class ProductDetailComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly products = inject(ProductService);
+  private readonly cart = inject(CartservicesService);
+  private readonly router = inject(Router);
+  private readonly checkout = inject(CheckoutService);
+  private readonly notifications = inject(NotificationService);
+  private readonly title = inject(Title);
+  private readonly meta = inject(Meta);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly reload = new Subject<void>();
+
+  product: Product | null = null;
   loading = true;
-  errorMessage: string | null = null;
-  private productId?: number;
-  quantity = 1;
+  errorMessage = '';
   selectedSize = '';
-
-  @ViewChild('carousel') carousel: any;
-
-  constructor(
-    private route: ActivatedRoute,
-    private productService: ProductService,
-    private cartService: CartservicesService,
-    private router: Router,
-    private checkoutService: CheckoutService,
-    private notification: NotificationService,
-  ) {}
+  quantity = 1;
+  adding = false;
 
   ngOnInit() {
-    this.route.paramMap.subscribe(params => {
-      const id = params.get('id');
-      if (!id) {
-        this.loading = false;
-        this.errorMessage = 'Không tìm thấy sản phẩm.';
-        return;
+    const description = 'Khám phá đầm, áo, quần và chân váy tại Zamy.';
+    this.destroyRef.onDestroy(() => this.meta.updateTag({ name: 'description', content: description }));
+    this.route.paramMap.pipe(
+      map(params => Number(params.get('id'))),
+      distinctUntilChanged(),
+      switchMap(id => this.reload.pipe(
+        startWith(undefined),
+        switchMap(() => {
+          this.product = null;
+          this.title.setTitle('Sản phẩm | Zamy');
+          this.meta.updateTag({ name: 'description', content: description });
+          this.selectedSize = '';
+          this.quantity = 1;
+          this.loading = true;
+          this.errorMessage = '';
+          if (!Number.isSafeInteger(id) || id <= 0) return of(null);
+          return this.products.getProductById(id).pipe(catchError((error: unknown) => {
+            if (!(error instanceof HttpErrorResponse) || error.status !== 404) {
+              this.errorMessage = 'Không thể tải sản phẩm. Vui lòng thử lại.';
+            }
+            return of(null);
+          }));
+        }),
+      )),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(product => {
+      this.product = product;
+      this.loading = false;
+      if (product) {
+        this.title.setTitle(product.name + ' | Zamy');
+        this.meta.updateTag({ name: 'description', content: product.name + (product.color ? ' · ' + product.color : '') + ' tại Zamy.' });
       }
-
-      this.productId = +id;
-      this.loadProduct();
     });
   }
 
-  retry(): void {
-    if (this.productId == null) return;
-    this.productService.invalidateProducts();
-    this.loadProduct();
+  get stock() { return this.product?.variants?.find(variant => variant.size === this.selectedSize)?.stock ?? 0; }
+
+  retry() { this.reload.next(); }
+
+  selectSize(size: string) {
+    this.selectedSize = size;
+    this.quantity = Math.max(1, Math.min(this.quantity, this.stock));
   }
 
-  private loadProduct(): void {
-    if (this.productId == null) return;
-    this.loading = !this.product;
-    this.errorMessage = null;
-    this.productService.getProductById(this.productId).subscribe({
-        next: (data) => {
-          this.product = data;
-          this.quantity = 1;
-          this.selectedSize = '';
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Không thể tải sản phẩm. Vui lòng thử lại.';
-          this.loading = false;
-        }
-      });
-  }
+  changeQuantity(delta: number) { this.quantity = Math.max(1, Math.min(this.stock, this.quantity + delta)); }
 
   addToCart() {
-    if (!this.product) return;
-    if (!this.ensureSizeSelected()) return;
-
-    this.cartService.addToCart(this.product, this.quantity, this.selectedSize);
-    this.notification.success('Đã thêm sản phẩm vào giỏ hàng.');
+    const line = this.selectedLine();
+    if (!line || this.adding) return;
+    this.adding = true;
+    this.cart.addToCart(line, this.quantity, this.selectedSize).pipe(
+      finalize(() => { this.adding = false; }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: () => this.notifications.success('Đã thêm sản phẩm vào giỏ hàng.'),
+      error: error => this.notifications.error(error?.error?.error || error?.message || 'Không thể thêm sản phẩm vào giỏ hàng.'),
+    });
   }
 
   addToFavorite() {
     if (!this.product) return;
-    this.cartService.addToFavorite(this.product);
-    this.notification.success('Đã thêm sản phẩm vào danh sách yêu thích.');
+    this.cart.addToFavorite(this.product);
+    this.notifications.success('Đã lưu sản phẩm yêu thích.');
   }
 
   buyNow() {
-    if (!this.product) return;
-    if (!this.ensureSizeSelected()) return;
-
-    const checkoutItem = {
-      ...this.product,
-      qty: this.quantity,
-      size: this.selectedSize,
-      selectedSize: this.selectedSize
-    };
-    this.checkoutService.setProducts([checkoutItem]);
-    this.router.navigate(['/checkout']);
+    const line = this.selectedLine();
+    if (!line || this.adding) return;
+    this.checkout.setProducts([line]);
+    void this.router.navigate(['/checkout']);
   }
 
-  getProductSizes(product = this.product): string[] {
-    if (!product) return [];
-
-    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
-      return product.sizes.map((size: any) => String(size).trim()).filter(Boolean);
+  private selectedLine() {
+    if (!this.product || !this.selectedSize || this.quantity > this.stock) {
+      this.notifications.warning('Vui lòng chọn kích cỡ còn hàng.');
+      return null;
     }
-
-    return product.size ? [String(product.size).trim()] : [];
-  }
-
-  selectSize(size: string) {
-    this.selectedSize = size;
-  }
-
-  changeQuantity(delta: number) {
-    const stock = Number(this.product?.stock) || 0;
-    const nextQuantity = this.quantity + delta;
-    const maxQuantity = stock > 0 ? stock : nextQuantity;
-    this.quantity = Math.min(Math.max(nextQuantity, 1), maxQuantity);
-  }
-
-  private ensureSizeSelected() {
-    const sizes = this.getProductSizes();
-
-    if (sizes.length === 0) {
-      this.notification.warning('Sản phẩm hiện chưa có size để chọn.');
-      return false;
-    }
-
-    if (!this.selectedSize) {
-      this.notification.warning('Vui lòng chọn size trước khi mua hàng.');
-      return false;
-    }
-
-    return true;
-  }
-
-  scrollLeft() {
-    this.carousel?.nativeElement?.scrollBy({ left: -200, behavior: 'smooth' });
-  }
-
-  scrollRight() {
-    this.carousel?.nativeElement?.scrollBy({ left: 200, behavior: 'smooth' });
+    return { ...this.product, stock: this.stock, qty: this.quantity, selectedSize: this.selectedSize };
   }
 }

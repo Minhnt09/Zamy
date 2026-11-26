@@ -1,7 +1,5 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
@@ -19,10 +17,7 @@ export const appConfig: ApplicationConfig = {
       })
     ),
 
-    provideAnimations(),
 
-    provideHttpClient(withInterceptors([backendStartupInterceptor])),
-
-    provideClientHydration(withEventReplay())
+    provideHttpClient(withInterceptors([backendStartupInterceptor]))
   ]
 };

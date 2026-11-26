@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -86,9 +86,10 @@ export class AuthService {
           this.validatedToken = token;
         }
       }),
-      catchError(() => {
-        if (this.getToken() === token) this.logout();
-        return of(null);
+      catchError((error: unknown) => {
+        if (this.getToken() !== token) return of(null);
+        if (error instanceof HttpErrorResponse && [401, 403].includes(error.status)) this.logout();
+        return of(this.currentUserSubject.value);
       }),
       finalize(() => {
         if (this.currentUserRequestToken === token) {

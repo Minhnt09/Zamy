@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../features/services/auth.service';
@@ -14,7 +14,10 @@ type AuthMode = 'login' | 'register';
   templateUrl: './login-popup.component.html',
   styleUrl: './login-popup.component.scss'
 })
-export class LoginPopupComponent {
+export class LoginPopupComponent implements AfterViewInit {
+  @ViewChild("dialog") private dialog!: ElementRef<HTMLDialogElement>;
+
+  ngAfterViewInit() { this.dialog.nativeElement.showModal(); }
   @Input() notice = '';
   @Output() closePopup = new EventEmitter<void>();
 
@@ -59,6 +62,7 @@ export class LoginPopupComponent {
   }
 
   submit() {
+    if (this.loading) return;
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -85,7 +89,7 @@ export class LoginPopupComponent {
         this.cartService.attachCartToCurrentUser();
         this.loading = false;
         this.successMessage = 'Đăng nhập thành công';
-        setTimeout(() => this.handleAuthSuccess(), 500);
+        this.handleAuthSuccess();
       },
       error: (error) => {
         this.loading = false;
@@ -122,7 +126,7 @@ export class LoginPopupComponent {
         this.cartService.attachCartToCurrentUser();
         this.loading = false;
         this.successMessage = 'Đăng ký thành công';
-        setTimeout(() => this.handleAuthSuccess(), 500);
+        this.handleAuthSuccess();
       },
       error: (error) => {
         this.loading = false;
@@ -132,16 +136,19 @@ export class LoginPopupComponent {
   }
 
   close() {
+    this.dialog.nativeElement.close();
     this.closePopup.emit();
   }
 
   private handleAuthSuccess() {
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
-    this.closePopup.emit();
+    this.close();
 
-    if (returnUrl) {
-      this.router.navigateByUrl(returnUrl);
+    if (returnUrl?.startsWith('/') && !returnUrl.startsWith('//')) {
+      void this.router.navigateByUrl(returnUrl);
+    } else if (this.route.snapshot.queryParamMap.get('login') === '1') {
+      void this.router.navigate(['/home'], { replaceUrl: true });
     }
   }
 }
