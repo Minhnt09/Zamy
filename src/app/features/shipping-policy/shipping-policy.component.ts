@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
+import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-shipping-policy',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [NavbarComponent, FooterComponent, CommonModule, RouterModule],
   templateUrl: './shipping-policy.component.html',
   styleUrl: './shipping-policy.component.scss'
 })

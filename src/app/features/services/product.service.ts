@@ -3,10 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export interface ProductVariant { size: string; stock: number; }
-
-const CACHE_TTL_MS = 60_000;
-
 export interface Product {
   id: number;
   name: string;
@@ -18,7 +14,6 @@ export interface Product {
   stock?: number;
   code?: string;
   category?: string;
-  variants?: ProductVariant[];
 }
 
 interface ApiResponse<T> { data: T; }
@@ -27,17 +22,13 @@ interface ApiResponse<T> { data: T; }
 export class ProductService {
   private readonly baseUrl = `${environment.apiUrl}/products`;
   private products$?: Observable<Product[]>;
-  private productsExpireAt = 0;
   private refreshingProducts$?: Observable<Product[]>;
-  private readonly productById = new Map<number, { request: Observable<Product>; expiresAt: number }>();
+  private readonly productById = new Map<number, Observable<Product>>();
 
   constructor(private readonly http: HttpClient) {}
 
   getAllProducts(): Observable<Product[]> {
-    if (!this.products$ || Date.now() >= this.productsExpireAt) {
-      this.productsExpireAt = Date.now() + CACHE_TTL_MS;
-      this.products$ = this.createProductsRequest();
-    }
+    if (!this.products$) this.products$ = this.createProductsRequest();
     return this.products$;
   }
 
@@ -46,7 +37,6 @@ export class ProductService {
       this.refreshingProducts$ = this.requestProducts().pipe(
         tap((products) => {
           this.products$ = of(products).pipe(shareReplay({ bufferSize: 1, refCount: false }));
-          this.productsExpireAt = Date.now() + CACHE_TTL_MS;
           this.productById.clear();
         }),
         finalize(() => { this.refreshingProducts$ = undefined; }),
@@ -63,16 +53,13 @@ export class ProductService {
 
   getProductById(id: number): Observable<Product> {
     const cached = this.productById.get(id);
-    if (cached && Date.now() < cached.expiresAt) return cached.request;
+    if (cached) return cached;
     const request$ = this.http.get<ApiResponse<Product>>(`${this.baseUrl}/${id}`).pipe(
       map((response) => response.data),
-      catchError((error: unknown) => {
-        if (this.productById.get(id)?.request === request$) this.productById.delete(id);
-        return throwError(() => error);
-      }),
+      catchError((error: unknown) => { this.productById.delete(id); return throwError(() => error); }),
       shareReplay({ bufferSize: 1, refCount: false })
     );
-    this.productById.set(id, { request: request$, expiresAt: Date.now() + CACHE_TTL_MS });
+    this.productById.set(id, request$);
     return request$;
   }
 

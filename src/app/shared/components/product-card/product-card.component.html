@@ -1,10 +1,16 @@
-<a [routerLink]="['/products', product().id]" class="group block h-full rounded-xl">
-  <div class="overflow-hidden rounded-xl bg-[#eee3d9]">
-    <app-product-image [src]="product().image" class="block transition-transform duration-300 group-hover:scale-[1.03]"></app-product-image>
-  </div>
-  <div class="px-0.5 pt-3">
-    <p class="text-sm font-semibold leading-snug group-hover:underline sm:text-base">{{ product().name }}</p>
-    <p class="mt-1.5 font-semibold text-[#824b4b]">{{ product().price | number }} ₫</p>
-    @if (product().stock === 0) { <p class="mt-1 text-xs text-stone-600">Hết hàng</p> }
-  </div>
-</a>
+<!-- SẢN PHẨM -->
+<div 
+    class="p-2 hover:scale-105 transition">
+    <div class="relative cursor-pointer"
+       [routerLink]="['/products', product.id]">
+    <img [src]="product.image" alt="" class=""/>
+    </div>
+
+    <h4 class="text-center mt-3 font-semibold">{{product.name}}</h4>
+
+    <div class="text-center">
+    <span class="text-red-600 font-bold text-lg">{{product.price | number}} VNĐ</span>
+    <span class="line-through text-gray-500 ml-2">750.000đ</span>
+    <div class="text-sm text-gray-500">({{product.stock}} sản phẩm đã bán)</div>
+    </div>
+</div>

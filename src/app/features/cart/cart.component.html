@@ -1,41 +1,194 @@
-<main class="store-page">
-  <h1 class="store-title">Giỏ hàng</h1>
-  @if (cart.length) {
-    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_330px]">
-      <section aria-label="Sản phẩm trong giỏ" class="space-y-3">
-        <label class="flex items-center gap-3 py-2">
-          <input type="checkbox" class="accent-[#824b4b]" [checked]="selectedCartItems.length === cart.length" [indeterminate]="selectedCartItems.length > 0 && selectedCartItems.length < cart.length" (change)="toggleAll($event)">
-          Chọn tất cả sản phẩm
-        </label>
-        @for (item of cart; track key(item)) {
-          <article class="store-panel grid grid-cols-[auto_72px_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[auto_96px_minmax(0,1fr)] sm:gap-5">
-            <input type="checkbox" class="mt-2 accent-[#824b4b]" [attr.aria-label]="'Chọn ' + item.name + ', size ' + (item.selectedSize || item.size)" [checked]="isSelected(item)" (change)="toggle(item, $event)">
-            <a [routerLink]="['/products', item.id]"><img [src]="item.image" [alt]="item.name ?? ''" class="aspect-[3/4] w-full rounded-lg object-cover" loading="lazy" width="96" height="128"></a>
-            <div class="min-w-0">
-              <a [routerLink]="['/products', item.id]" class="font-semibold hover:underline">{{ item.name }}</a>
-              <p class="text-sm text-stone-600">{{ item.color }} · Size {{ item.selectedSize || item.size }}</p>
-              <p class="mt-2 font-semibold">{{ (item.price ?? 0) * (item.qty ?? 1) | number }} ₫</p>
-              <div class="mt-3 flex flex-wrap items-center gap-2">
-                <button type="button" class="store-step" aria-label="Giảm số lượng" [disabled]="updating || (item.qty ?? 1) <= 1" (click)="changeQuantity(item, -1)">−</button>
-                <span aria-live="polite" class="min-w-5 text-center">{{ item.qty ?? 1 }}</span>
-                <button type="button" class="store-step" aria-label="Tăng số lượng" [disabled]="updating || (item.stock !== undefined && (item.qty ?? 1) >= item.stock)" (click)="changeQuantity(item, 1)">+</button>
-                <button type="button" class="ml-2 underline disabled:opacity-50" [disabled]="updating" (click)="remove(item)">Xóa</button>
+<app-navbar></app-navbar>
+
+<div class="bg-[#F7EBE4] min-h-screen py-6 md:py-10 px-4">
+
+  <!-- Header -->
+  <div class="max-w-[1500px] mx-auto">
+    <button type="button" (click)="goBack()">
+        <img src="/assets/icon/back.png" alt="Quay lại">
+    </button>
+  </div>  
+  <div class="text-center mb-6 md:mb-10">  
+      <h1 class="font-bold text-[24px] md:text-[36px] text-[#8A5252]">GIỎ HÀNG CỦA BẠN</h1>
+      <p class="text-[14px] md:text-[18px] text-[#8A5252]">Có {{ cart.length }} sản phẩm trong giỏ hàng</p>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="max-w-[1500px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
+
+      <!-- LEFT - Product List -->
+      <div class="lg:col-span-2">
+
+          <!-- Select All -->
+          <div class="flex items-center gap-3 mb-4 md:mb-5 text-[#8A5252] font-medium text-[14px] md:text-[16px]">
+              <input
+                type="checkbox"
+                class="w-4 h-4 md:w-5 md:h-5 accent-[#8A5252]"
+                [checked]="isAllSelected()"
+                (change)="toggleAll($event)"
+              />
+              <span>Chọn tất cả sản phẩm</span>
+          </div>
+
+          <!-- Header row - Desktop only -->
+          <div class="hidden md:grid grid-cols-12 text-[#8A5252] text-[15px] font-semibold pb-3">
+              <div class="col-span-1"></div>
+              <div class="col-span-3">Hình ảnh</div>
+              <div class="col-span-3">Thông tin</div>
+              <div class="col-span-2">Màu sắc</div>
+              <div class="col-span-1">Size</div>
+              <div class="col-span-1">SL</div>
+              <div class="col-span-1">Giá</div>
+          </div>
+
+          <!-- Product List -->
+          <div
+              *ngFor="let product of cart; let i = index"
+              class="p-3 md:p-4 mb-4 shadow-sm">
+
+              <!-- MOBILE LAYOUT -->
+              <div class="md:hidden flex gap-3">
+                  <!-- Checkbox -->
+                  <input
+                    type="checkbox"
+                    class="w-4 h-4 accent-[#8A5252] mt-1 flex-shrink-0"
+                    [checked]="isSelected(product)"
+                    (change)="toggleProduct(product, $event)"
+                  />
+
+                  <!-- Image -->
+                  <img 
+                    [src]="product.image"
+                    class="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                    alt="{{ product.name }}"
+                  />
+
+                  <!-- Info Column -->
+                  <div class="flex-1 flex flex-col gap-2">
+                      <!-- Name -->
+                      <p class="font-semibold text-[14px] text-[#8A5252] leading-tight">{{ product.name }}</p>
+                      
+                      <!-- Color & Size -->
+                      <div class="flex items-center gap-3 text-[13px] text-[#8A5252]">
+                          <div class="flex items-center gap-1">
+                              <span class="w-5 h-5 rounded-full border flex-shrink-0"
+                                    [ngStyle]="{'background': product.color}">
+                              </span>
+                          </div>
+                          <span class="font-medium">Size: {{ product.selectedSize || product.size }}</span>
+                      </div>
+
+                      <!-- Quantity & Price -->
+                      <div class="flex items-center justify-between">
+                          <!-- Quantity -->
+                          <div class="flex items-center gap-2">
+                              <button (click)="changeQuantity(i, -1)" class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center text-[14px]">-</button>
+                              <span class="font-semibold text-[14px] min-w-[20px] text-center">{{ product.qty }}</span>
+                              <button (click)="changeQuantity(i, 1)" class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center text-[14px]">+</button>
+                          </div>
+
+                          <!-- Price -->
+                          <span class="font-bold text-[15px] text-[#8A5252]">{{ (product.price * (product.qty || 1)) | number }} đ</span>
+                      </div>
+
+                      <!-- Delete button -->
+                      <button (click)="removeItem(i)" class="text-[12px] text-red-500 hover:underline self-start">Xoá sản phẩm</button>
+                  </div>
               </div>
-            </div>
-          </article>
-        }
-      </section>
-      <aside class="store-panel h-fit lg:sticky lg:top-24">
-        <h2 class="text-xl font-semibold">Tóm tắt đơn hàng</h2>
-        <p class="mt-3 text-sm text-stone-600">{{ selectedCartItems.length }} dòng sản phẩm được chọn</p>
-        <p class="my-5 flex justify-between border-t pt-4 font-semibold"><span>Tạm tính</span><span>{{ total | number }} ₫</span></p>
-        <button type="button" class="store-button w-full" [disabled]="updating || !selectedCartItems.length" (click)="goBuy()">Tiến hành đặt hàng</button>
-      </aside>
-    </div>
-  } @else {
-    <section class="store-panel text-center">
-      <p class="mb-5">Giỏ hàng của bạn đang trống.</p>
-      <a routerLink="/dress" class="store-button">Xem sản phẩm</a>
-    </section>
-  }
-</main>
+
+              <!-- DESKTOP LAYOUT -->
+              <div class="hidden md:grid grid-cols-12 items-center gap-4">
+                  <!-- Checkbox -->
+                  <input
+                    type="checkbox"
+                    class="col-span-1 w-5 h-5 accent-[#8A5252]"
+                    [checked]="isSelected(product)"
+                    (change)="toggleProduct(product, $event)"
+                  />
+
+                  <!-- Image -->
+                  <div class="col-span-3">
+                      <img 
+                        [src]="product.image"
+                        class="w-full max-w-[110px] rounded-lg shadow"
+                        alt="{{ product.name }}"
+                      />
+                  </div>
+
+                  <!-- Info -->
+                  <div class="col-span-3 text-[#8A5252]">
+                      <p class="font-semibold text-[15px] leading-tight">{{ product.name }}</p>
+                  </div>
+
+                  <!-- Color -->
+                  <div class="col-span-2 flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-full border"
+                            [ngStyle]="{'background': product.color}">
+                      </span>
+                  </div>
+
+                  <!-- Size -->
+                  <div class="col-span-1 font-semibold text-[#8A5252]">
+                      {{ product.selectedSize || product.size }}
+                  </div>
+
+                  <!-- Quantity -->
+                  <div class="col-span-1 flex items-center justify-center gap-2">
+                      <button (click)="changeQuantity(i, -1)" class="w-7 h-7 bg-gray-300 rounded flex items-center justify-center">-</button>
+                      <span class="font-semibold">{{ product.qty }}</span>
+                      <button (click)="changeQuantity(i, 1)" class="w-7 h-7 bg-gray-300 rounded flex items-center justify-center">+</button>
+                  </div>
+
+                  <!-- Price + Delete -->
+                  <div class="col-span-1 flex flex-col items-end gap-2 font-bold text-[#8A5252]">
+                      <span>{{ (product.price * (product.qty || 1)) | number }} đ</span>
+                      <button (click)="removeItem(i)" class="text-sm text-red-500 hover:underline">Xoá</button>
+                  </div>
+              </div>
+
+          </div>
+
+      </div>
+
+      <!-- RIGHT: Summary -->
+      <div class="bg-[#ECE2D9] px-4 md:px-7 py-6 md:py-8 rounded-lg shadow-md h-max flex flex-col gap-4 md:gap-6">
+
+          <h2 class="font-bold text-[18px] md:text-[20px] text-[#8A5252] border-b pb-3">
+              ĐƠN HÀNG CỦA BẠN
+          </h2>
+
+          <!-- Items summary -->
+          <p *ngIf="selectedCartItems.length === 0" class="text-[14px] md:text-[16px] text-[#8A5252]">
+              Chọn sản phẩm để xem đơn hàng
+          </p>
+
+          <div *ngFor="let item of selectedCartItems" class="flex justify-between text-[14px] md:text-[16px] text-[#8A5252] gap-2">
+              <span class="truncate max-w-[120px] md:max-w-[160px]">{{ item.name }} ({{ item.selectedSize || item.size }})</span>
+              <span class="flex-shrink-0">x{{ item.qty }}</span>
+              <span class="flex-shrink-0 font-medium">{{ (item.price * (item.qty || 1)) | number }} đ</span>
+          </div>
+
+          <!-- Total -->
+          <p class="flex justify-between text-[18px] md:text-[20px] font-bold text-[#D62929] mt-3 border-t pt-3">
+              <span>Tổng tiền:</span>
+              <span>{{ getTotalPrice() | number }} đ</span>
+          </p>
+
+          <!-- Buttons -->
+          <button
+              (click)="goBuy()"
+              class="bg-[#E44945] py-3 rounded-md text-white font-semibold text-[15px] md:text-[17px] hover:opacity-90 transition">
+              TIẾN HÀNH ĐẶT HÀNG
+          </button>
+
+          <button
+              (click)="goBack()"
+              class="bg-black py-3 rounded-md text-white font-semibold text-[15px] md:text-[17px] hover:opacity-85 transition">
+              TIẾP TỤC MUA SẮM
+          </button>
+
+      </div>
+
+  </div>
+</div>
+<app-footer></app-footer>

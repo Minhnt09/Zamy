@@ -1,0 +1,24 @@
+:host {
+  display: block;
+  overflow-x: clip;
+}
+
+.collection-carousel {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+@media (max-width: 767px) {
+  .home-collection { animation: home-section-enter 380ms ease-out both; }
+}
+
+@keyframes home-section-enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-collection { animation: none; }
+}

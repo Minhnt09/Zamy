@@ -1,12 +1,20 @@
-<dialog #dialog class="store-dialog" aria-labelledby="login-title" (cancel)="$event.preventDefault(); close()">
+<!-- OVERLAY -->
+<div
+  class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+  (click)="close()">
+</div>
+
+<!-- POPUP -->
+<div class="fixed inset-y-0 right-0 w-full max-w-md bg-white rounded-l-3xl p-8 z-50 overflow-y-auto">
+  <div (click)="$event.stopPropagation()">
     <button
       type="button"
-      class="store-step absolute right-3 top-3" aria-label="Đóng đăng nhập"
+      class="absolute top-4 right-4 text-2xl"
       (click)="close()">
       x
     </button>
 
-    <h2 id="login-title" class="text-center text-[#936B6B] text-2xl font-semibold mb-6">
+    <h2 class="text-center text-[#936B6B] text-2xl font-semibold mb-6">
       {{ isLoginMode ? 'Đăng nhập' : 'Tạo tài khoản' }}
     </h2>
 
@@ -44,8 +52,8 @@
         *ngIf="!isLoginMode"
         type="text"
         name="name"
-        placeholder="Họ tên" aria-label="Họ tên"
-        class="w-full bg-[#F7EBE4] px-5 py-4 rounded-xl placeholder:text-gray-600"
+        placeholder="Họ tên"
+        class="w-full bg-[#F7EBE4] px-5 py-4 rounded-xl placeholder:text-gray-600 outline-none"
         [(ngModel)]="registerForm.name"
       />
 
@@ -53,8 +61,8 @@
         *ngIf="isLoginMode"
         type="email"
         name="loginEmail"
-        placeholder="Email" aria-label="Email"
-        class="w-full bg-[#F7EBE4] px-5 py-4 rounded-xl placeholder:text-gray-600"
+        placeholder="Email"
+        class="w-full bg-[#F7EBE4] px-5 py-4 rounded-xl placeholder:text-gray-600 outline-none"
         [(ngModel)]="loginForm.email"
       />
 
@@ -62,8 +70,8 @@
         *ngIf="!isLoginMode"
         type="email"
         name="registerEmail"
-        placeholder="Email" aria-label="Email"
-        class="w-full bg-[#F7EBE4] px-5 py-4 rounded-xl placeholder:text-gray-600"
+        placeholder="Email"
+        class="w-full bg-[#F7EBE4] px-5 py-4 rounded-xl placeholder:text-gray-600 outline-none"
         [(ngModel)]="registerForm.email"
       />
 
@@ -72,8 +80,8 @@
           *ngIf="isLoginMode"
           [type]="showPassword ? 'text' : 'password'"
           name="loginPassword"
-          placeholder="Mật khẩu" aria-label="Mật khẩu"
-          class="w-full bg-[#F7EBE4] px-5 py-4 pr-16 rounded-xl placeholder:text-gray-600"
+          placeholder="Mật khẩu"
+          class="w-full bg-[#F7EBE4] px-5 py-4 pr-16 rounded-xl placeholder:text-gray-600 outline-none"
           [(ngModel)]="loginForm.password"
         />
 
@@ -81,8 +89,8 @@
           *ngIf="!isLoginMode"
           [type]="showPassword ? 'text' : 'password'"
           name="registerPassword"
-          placeholder="Mật khẩu" aria-label="Mật khẩu"
-          class="w-full bg-[#F7EBE4] px-5 py-4 pr-16 rounded-xl placeholder:text-gray-600"
+          placeholder="Mật khẩu"
+          class="w-full bg-[#F7EBE4] px-5 py-4 pr-16 rounded-xl placeholder:text-gray-600 outline-none"
           [(ngModel)]="registerForm.password"
         />
 
@@ -98,8 +106,8 @@
         *ngIf="!isLoginMode"
         [type]="showPassword ? 'text' : 'password'"
         name="confirmPassword"
-        placeholder="Xác nhận mật khẩu" aria-label="Xác nhận mật khẩu"
-        class="w-full bg-[#F7EBE4] px-5 py-4 rounded-xl placeholder:text-gray-600"
+        placeholder="Xác nhận mật khẩu"
+        class="w-full bg-[#F7EBE4] px-5 py-4 rounded-xl placeholder:text-gray-600 outline-none"
         [(ngModel)]="registerForm.confirmPassword"
       />
 
@@ -159,4 +167,5 @@
       <img src="assets/icon/instagram.png" class="w-6" alt="Instagram">
       Instagram
     </button> -->
-</dialog>
+  </div>
+</div>

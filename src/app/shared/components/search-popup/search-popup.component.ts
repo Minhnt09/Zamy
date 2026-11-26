@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { Product, ProductService } from '../../../features/services/product.service';
+import { ProductService } from '../../../features/services/product.service';
 
 @Component({
   selector: 'app-search-popup',
@@ -11,14 +11,12 @@ import { Product, ProductService } from '../../../features/services/product.serv
   templateUrl: './search-popup.component.html',
   styleUrls: ['./search-popup.component.scss']
 })
-export class SearchPopupComponent implements OnInit, AfterViewInit {
-  @ViewChild("dialog") private dialog!: ElementRef<HTMLDialogElement>;
-  ngAfterViewInit() { this.dialog.nativeElement.showModal(); }
+export class SearchPopupComponent implements OnInit {
+  @Input() isSearchOpen = false;
   @Output() closeEvent = new EventEmitter<void>();
 
   keyword = '';
-  products: Product[] = [];
-  failed = false;
+  products: any[] = [];
   loading = false;
 
   constructor(
@@ -54,19 +52,23 @@ export class SearchPopupComponent implements OnInit, AfterViewInit {
 
   loadProducts() {
     this.loading = true;
-    this.failed = false;
 
     this.productService.getAllProducts().subscribe({
       next: (data) => {
         this.products = Array.isArray(data) ? data : [];
         this.loading = false;
       },
-      error: () => {
-        this.failed = true;
+      error: (error) => {
+        console.error('Search products error:', error);
         this.products = [];
         this.loading = false;
       }
     });
+  }
+
+  goToProduct(productId: number) {
+    this.closeSearch();
+    this.router.navigate(['/products', productId]);
   }
 
   submitSearch() {
@@ -84,7 +86,6 @@ export class SearchPopupComponent implements OnInit, AfterViewInit {
 
   closeSearch() {
     this.keyword = '';
-    this.dialog.nativeElement.close();
     this.closeEvent.emit();
   }
 
@@ -93,7 +94,6 @@ export class SearchPopupComponent implements OnInit, AfterViewInit {
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd')
       .trim();
   }
 }

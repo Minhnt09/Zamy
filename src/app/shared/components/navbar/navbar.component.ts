@@ -1,54 +1,129 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
-import { AuthService } from '../../../features/services/auth.service';
+import { map, Observable } from 'rxjs';
+import { AuthService, AuthUser } from '../../../features/services/auth.service';
 import { CartservicesService } from '../../../features/services/cartservices.service';
 import { LoginPopupComponent } from '../login-popup/login-popup.component';
 import { SearchPopupComponent } from '../search-popup/search-popup.component';
 
 @Component({
   selector: 'app-navbar',
-  imports: [CommonModule, RouterModule, LoginPopupComponent, SearchPopupComponent],
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    LoginPopupComponent,
+    SearchPopupComponent
+  ],
   templateUrl: './navbar.component.html',
+  styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-  private readonly auth = inject(AuthService);
-  readonly cartCount$ = inject(CartservicesService).cart$.pipe(
-    map(items => items.reduce((total, item) => total + (item.qty ?? 1), 0)),
-  );
-  readonly menu = [
-    { label: 'Tất cả', path: '/sale' }, { label: 'Đầm', path: '/dress' }, { label: 'Áo', path: '/shirt' },
-    { label: 'Quần', path: '/trousers' }, { label: 'Chân váy', path: '/skirt' }, { label: 'Lookbook', path: '/store' },
-  ];
-  isSearchOpen = false;
-  showLogin = false;
-  loginNotice = '';
+  isMenuOpen = false;
   isMobileMenuOpen = false;
-  get currentUser() { return this.auth.getCurrentUser(); }
+  showLogin = false;
+  isSearchOpen = false;
+  loginNotice = '';
+  favoriteCount$: Observable<any[]>;
+  cartCount$: Observable<number>;
 
-  constructor() {
-    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    public authService: AuthService,
+    private cartService: CartservicesService
+  ) {
+    this.favoriteCount$ = this.cartService.favorites$;
+    this.cartCount$ = this.cartService.cart$.pipe(
+      map(items => items.reduce((total, item) => total + (Number(item.qty) || 1), 0))
+    );
+  }
+
+  ngOnInit() {
+    this.route.queryParamMap.subscribe(params => {
       if (params.get('login') === '1' && !this.currentUser) {
         this.loginNotice = params.get('reason') === 'purchase-required'
-          ? 'Đăng nhập hoặc đăng ký để tiếp tục thanh toán.' : '';
+          ? 'Vui lòng đăng nhập hoặc đăng ký để mua hàng.'
+          : '';
         this.showLogin = true;
       }
     });
   }
 
+  get currentUser(): AuthUser | null {
+    return this.authService.getCurrentUser();
+  }
+
+  openSearch() {
+    this.isSearchOpen = true;
+  }
+
+  closeSearch() {
+    this.isSearchOpen = false;
+  }
+
+  openLogin() {
+    this.loginNotice = '';
+    this.showLogin = true;
+  }
+
   closeLogin() {
     this.showLogin = false;
     this.loginNotice = '';
+
     if (!this.currentUser && this.route.snapshot.queryParamMap.get('login') === '1') {
-      const next = this.router.parseUrl(this.router.url);
-      for (const key of ['login', 'reason', 'returnUrl']) delete next.queryParams[key];
-      void this.router.navigateByUrl(next, { replaceUrl: true });
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { login: null, reason: null, returnUrl: null },
+        queryParamsHandling: 'merge',
+      });
     }
   }
 
-  logout() { this.auth.logout(); }
+  goHome() {
+    this.router.navigate(['/home']);
+  }
+
+  goSale() {
+    this.router.navigate(['/sale']);
+  }
+
+  goDress() {
+    this.router.navigate(['/dress']);
+  }
+
+  goTrousers() {
+    this.router.navigate(['/trousers']);
+  }
+
+  goShirt() {
+    this.router.navigate(['/shirt']);
+  }
+
+  goSkirt() {
+    this.router.navigate(['/skirt']);
+  }
+
+  goStore() {
+    this.router.navigate(['/store']);
+  }
+
+  goFavorite() {
+    this.router.navigate(['/favorites']);
+  }
+
+  goCart() {
+    this.router.navigate(['/cart']);
+  }
+
+  logout() {
+    this.authService.logout();
+    this.showLogin = false;
+    this.isMobileMenuOpen = false;
+  }
+
+  toggleMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+  }
 }

@@ -1,55 +1,137 @@
-<header class="border-b border-[#e4d7cc] bg-[#fcf8f4]">
-  <nav class="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-8" aria-label="Điều hướng chính">
-    <div class="flex items-center gap-2 lg:gap-0">
-      <button type="button" class="store-step lg:hidden" aria-label="Menu danh mục" aria-controls="mobile-categories"
-        [attr.aria-expanded]="isMobileMenuOpen" (click)="isMobileMenuOpen = !isMobileMenuOpen">
-        <span aria-hidden="true">☰</span>
-      </button>
-      <a routerLink="/home" aria-label="Zamy, trang chủ" (click)="isMobileMenuOpen = false">
-        <img src="/assets/icon/logo.svg" alt="" class="h-auto w-14 sm:w-16" width="64" height="44">
-      </a>
+<nav class="fixed top-0 left-0 w-full h-[64px] md:h-[80px] bg-[#E8DCD1] shadow-sm z-50">
+  <div class="max-w-[1600px] mx-auto h-full px-4 md:px-6 flex items-center justify-between">
+
+    <!-- LEFT – Logo -->
+    <a (click)="goHome()" class="cursor-pointer flex items-center">
+      <img src="/assets/icon/logo.svg" alt="logo" class="w-[64px] md:w-[70px]">
+    </a>
+
+    <!-- CENTER – Menu (Desktop) -->
+    <div class="hidden md:flex items-center gap-10 text-[#8A5252]">
+      <a (click)="goSale()" class="nav-item">SALE</a>
+      <a (click)="goDress()" class="nav-item">ĐẦM</a>
+      <a (click)="goShirt()" class="nav-item">ÁO</a>
+      <a (click)="goTrousers()" class="nav-item">QUẦN</a>
+      <a (click)="goSkirt()" class="nav-item">CHÂN VÁY</a>
+      <a (click)="goStore()" class="nav-item">LOOKBOOK</a>
     </div>
 
-    <div class="hidden items-center gap-5 lg:flex">
-      @for (item of menu; track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="underline" ariaCurrentWhenActive="page" class="py-3 text-sm font-medium hover:underline">{{ item.label }}</a>
-      }
+    <!-- RIGHT – Icons (Desktop) -->
+    <div class="hidden md:flex items-center gap-6">
+      <button type="button" (click)="goFavorite()" class="relative w-[36px] h-[36px] p-0 border-0 bg-transparent cursor-pointer">
+        <img src="/assets/icon/heart1.png" class="w-full h-full object-contain" alt="favorites">
+        <span
+          *ngIf="(favoriteCount$ | async)?.length as favoriteCount"
+          class="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#8A5252] text-white text-[11px] leading-[18px] text-center font-semibold"
+        >
+          {{ favoriteCount }}
+        </span>
+      </button>
+      <button type="button" (click)="goCart()" class="relative w-[36px] h-[36px] p-0 border-0 bg-transparent cursor-pointer">
+        <img src="/assets/icon/giohang.png" class="w-full h-full object-contain" alt="cart">
+        <span
+          *ngIf="cartCount$ | async as cartCount"
+          class="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#8A5252] text-white text-[11px] leading-[18px] text-center font-semibold"
+        >
+          {{ cartCount }}
+        </span>
+      </button>
+      <img src="/assets/icon/thongbao1.png" class="w-[34px] cursor-pointer">
+
+      <img (click)="openSearch()" src="/assets/icon/timkiem3.png" class="w-[28px] cursor-pointer">
+
+      <button
+        *ngIf="currentUser; else guestLogin"
+        type="button"
+        class="flex items-center gap-2 text-[#8A5252] font-medium"
+        (click)="logout()"
+      >
+        <span class="max-w-[120px] truncate">{{ currentUser.name }}</span>
+        <span class="text-sm">(Thoát)</span>
+      </button>
+
+      <ng-template #guestLogin>
+        <img (click)="openLogin()" src="/assets/icon/user1.png" class="w-[36px] cursor-pointer">
+      </ng-template>
+      <app-search-popup
+        *ngIf="isSearchOpen"
+        [isSearchOpen]="isSearchOpen"
+        (closeEvent)="closeSearch()">
+      </app-search-popup>
     </div>
 
-    <div class="flex items-center gap-1 sm:gap-2">
-      <button type="button" class="store-step border-transparent" aria-label="Tìm kiếm" (click)="isSearchOpen = true">
-        <img src="/assets/icon/timkiem3.png" alt="" width="20" height="20">
-      </button>
-      <a routerLink="/favorites" class="store-step border-transparent" aria-label="Yêu thích" (click)="isMobileMenuOpen = false">
-        <img src="/assets/icon/heart1.png" alt="" width="21" height="21">
-      </a>
-      <a routerLink="/cart" class="store-step relative border-transparent" [attr.aria-label]="'Giỏ hàng, ' + ((cartCount$ | async) ?? 0) + ' sản phẩm'" (click)="isMobileMenuOpen = false">
-        <img src="/assets/icon/giohang.png" alt="" width="24" height="24">
-        @if (cartCount$ | async; as count) {
-          <span class="absolute right-0 top-0 rounded-full bg-[#754242] px-1 text-xs font-medium text-white" aria-hidden="true">{{ count }}</span>
-        }
-      </a>
-      @if (currentUser) {
-        <button type="button" class="store-step border-transparent text-xs font-semibold" (click)="logout()">Thoát</button>
-      } @else {
-        <button type="button" class="store-step border-transparent" aria-label="Đăng nhập" (click)="showLogin = true">
-          <img src="/assets/icon/user1.png" alt="" width="22" height="22">
-        </button>
-      }
+    <!-- Mobile Hamburger -->
+    <div class="md:hidden flex items-center">
+      <button type="button" aria-label="Mở menu" class="flex h-10 w-10 items-center justify-center text-[28px] leading-none text-[#8A5252]" (click)="toggleMenu()">☰</button>
     </div>
-  </nav>
-  <div id="mobile-categories" [hidden]="!isMobileMenuOpen" class="border-t px-4 pb-3 lg:hidden" (keydown.escape)="isMobileMenuOpen = false">
-    @if (isMobileMenuOpen) {
-      @for (item of menu; track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="underline" ariaCurrentWhenActive="page" class="block py-3 text-sm font-medium" (click)="isMobileMenuOpen = false">{{ item.label }}</a>
-      }
-    }
   </div>
-</header>
+</nav>
 
-@if (showLogin) {
-  <app-login-popup [notice]="loginNotice" (closePopup)="closeLogin()"></app-login-popup>
-}
-@if (isSearchOpen) {
-  <app-search-popup (closeEvent)="isSearchOpen = false"></app-search-popup>
-}
+<app-login-popup
+  *ngIf="showLogin"
+  [notice]="loginNotice"
+  (closePopup)="closeLogin()">
+</app-login-popup>
+
+<!-- Spacer -->
+<div class="h-[64px] md:h-[80px]"></div>
+
+<!-- MOBILE OVERLAY -->
+<div
+  *ngIf="isMobileMenuOpen"
+  class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+  (click)="toggleMenu()">
+</div>
+
+<!-- MOBILE MENU -->
+<div
+  *ngIf="isMobileMenuOpen"
+  class="fixed top-0 right-0 w-[80%] max-w-sm h-full bg-[#E8DCD1] z-50 p-6 flex flex-col gap-6">
+
+  <!-- MENU -->
+  <div class="flex flex-col gap-6 text-[#8A5252]">
+    <a (click)="goSale()" class="nav-item">SALE</a>
+    <a (click)="goDress()" class="nav-item">ĐẦM</a>
+    <a (click)="goShirt()" class="nav-item">ÁO</a>
+    <a (click)="goTrousers()" class="nav-item">QUẦN</a>
+    <a (click)="goSkirt()" class="nav-item">CHÂN VÁY</a>
+    <a (click)="goStore()" class="nav-item">LOOKBOOK</a>
+  </div>
+
+  <div class="border-t border-[#8A5252]/30 my-2"></div>
+
+  <!-- ICONS -->
+  <div class="flex items-center gap-6">
+    <button type="button" (click)="goFavorite()" class="relative w-[28px] h-[28px] p-0 border-0 bg-transparent cursor-pointer">
+      <img src="/assets/icon/heart1.png" class="w-full h-full object-contain" alt="favorites">
+      <span
+        *ngIf="(favoriteCount$ | async)?.length as favoriteCount"
+        class="absolute -top-2 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#8A5252] text-white text-[10px] leading-[16px] text-center font-semibold"
+      >
+        {{ favoriteCount }}
+      </span>
+    </button>
+    <button type="button" (click)="goCart()" class="relative w-[28px] h-[28px] p-0 border-0 bg-transparent cursor-pointer">
+      <img src="/assets/icon/giohang.png" class="w-full h-full object-contain" alt="cart">
+      <span
+        *ngIf="cartCount$ | async as cartCount"
+        class="absolute -top-2 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#8A5252] text-white text-[10px] leading-[16px] text-center font-semibold"
+      >
+        {{ cartCount }}
+      </span>
+    </button>
+    <img (click)="openSearch()" src="/assets/icon/timkiem3.png" class="w-[26px]">
+    <button
+      *ngIf="currentUser; else mobileGuestLogin"
+      type="button"
+      class="text-[#8A5252] text-sm font-medium"
+      (click)="logout()"
+    >
+      {{ currentUser.name }} (Thoát)
+    </button>
+
+    <ng-template #mobileGuestLogin>
+      <img (click)="openLogin()" src="/assets/icon/user1.png" class="w-[28px]">
+    </ng-template>
+  </div>
+</div>

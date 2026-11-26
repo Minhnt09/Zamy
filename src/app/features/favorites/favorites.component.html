@@ -1,20 +1,56 @@
-<main class="store-page">
-  <h1 class="store-title">Sản phẩm yêu thích</h1>
-  @if (favorites$ | async; as favorites) {
-    @if (favorites.length) {
-      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        @for (product of favorites; track product.id) {
-          <article class="flex flex-col gap-3">
-            <app-product-card [product]="product"></app-product-card>
-            <button type="button" class="store-button-outline self-start" (click)="removeFavorite(product.id)" [attr.aria-label]="'Bỏ lưu ' + product.name">Bỏ lưu</button>
-          </article>
-        }
+<app-navbar></app-navbar>
+
+<div class="bg-[#F7EBE4] py-10 px-6 sm:px-16">
+  <h2 class="text-[#8A5252] text-[28px] sm:text-[34px] font-semibold text-center mb-10">
+    SẢN PHẨM YÊU THÍCH
+  </h2>
+
+  <!-- Header bảng -->
+  <div class="grid grid-cols-4 bg-[#EBDDD4] py-3 px-6 text-sm text-[#6b4e4e] font-medium rounded-t-lg">
+    <div>Hình ảnh</div>
+    <div>Tên sản phẩm</div>
+    <div>Giá tiền</div>
+    <div class="text-center">Thêm vào giỏ</div>
+  </div>
+
+  <!-- Danh sách -->
+  <div class="space-y-3 bg-white p-4 rounded-b-lg shadow">
+
+    <div *ngFor="let item of favorites" class="grid grid-cols-4 items-center border-b last:border-none py-4">
+
+      <!-- Ảnh + nút xóa -->
+      <div class="flex items-center gap-3">
+        <button (click)="removeFavorite(item.id)"
+          class="w-6 h-6 border border-black rounded-full flex items-center justify-center hover:bg-gray-200 transition">
+          ✕
+        </button>
+
+        <img [src]="item.image" class="w-[75px] h-auto object-cover rounded" />
       </div>
-    } @else {
-      <div class="store-panel">
-        <p class="mb-4">Bạn chưa lưu sản phẩm nào.</p>
-        <a routerLink="/sale" class="store-button">Khám phá sản phẩm</a>
+
+      <!-- Tên -->
+      <div class="text-[#6b4e4e] leading-6">
+        {{ item.title || item.name }}
       </div>
-    }
-  }
-</main>
+
+      <!-- Giá -->
+      <div class="text-[#C54444] font-semibold">
+        {{ item.price | number }} đ
+      </div>
+
+      <!-- Thêm vào giỏ -->
+      <div class="text-center">
+        <button (click)="addToCartFromFavorite(item)"
+          class="text-[#8A5252] underline hover:text-[#6a3e3e] transition">
+          THÊM VÀO GIỎ HÀNG
+        </button>
+      </div>
+    </div>
+
+    <!-- Không có sản phẩm -->
+    <div *ngIf="favorites.length === 0" class="text-center py-10 text-gray-500">
+      Bạn chưa có sản phẩm yêu thích nào.
+    </div>
+  </div>
+</div>
+<app-footer></app-footer>

@@ -1,76 +1,267 @@
-import { Component, DestroyRef, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
-import { finalize, Observable } from 'rxjs';
-import { CartItem, CartservicesService } from '../services/cartservices.service';
+import { CartservicesService } from '../services/cartservices.service';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { FooterComponent } from "../../shared/components/footer/footer.component";
 import { CheckoutService } from '../services/checkout.service';
 import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-cart',
-  imports: [CommonModule, RouterLink],
+  standalone: true,
+  imports: [NavbarComponent, CommonModule, FooterComponent],
   templateUrl: './cart.component.html',
+  styleUrls: ['./cart.component.scss']
 })
-export class CartComponent {
-  private readonly cartService = inject(CartservicesService);
-  private readonly checkout = inject(CheckoutService);
-  private readonly router = inject(Router);
-  private readonly notification = inject(NotificationService);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly selection = new Set<string>();
-  cart: CartItem[] = [];
-  selectedCartItems: CartItem[] = [];
-  updating = false;
+export class CartComponent implements OnInit, OnDestroy {
+  cart: any[] = [];
+  product: any;
+  selectedCartItemKeys = new Set<string>();
+  selectedCartItems: any[] = [];
+  private sub?: Subscription;
 
-  constructor() {
-    this.cartService.cart$.pipe(takeUntilDestroyed()).subscribe(items => {
-      this.cart = items;
-      const keys = new Set(items.map(item => this.key(item)));
-      this.selection.forEach(key => { if (!keys.has(key)) this.selection.delete(key); });
-      this.syncSelection();
-    });
+  constructor(
+    private cartService: CartservicesService,
+    private checkoutService: CheckoutService,
+    private router: Router,
+    private notification: NotificationService
+  ) { }
+
+  ngOnInit() {
+    // Nếu service có cart$ (BehaviorSubject) thì subscribe để luôn đồng bộ
+    const maybeCart$ = (this.cartService as any).cart$;
+    if (maybeCart$ && typeof maybeCart$.subscribe === 'function') {
+      this.sub = maybeCart$.subscribe((items: any[]) => {
+        this.cart = Array.isArray(items) ? items.map(item => {
+          if (typeof item.qty !== 'number' || item.qty < 1) item.qty = 1;
+          return item;
+        }) : [];
+        this.syncSelectedProducts();
+      });
+    } else {
+      // fallback: lấy một lần từ getCartItems()
+      this.cart = this.cartService.getCartItems() || [];
+      this.cart.forEach(item => {
+        if (typeof item.qty !== 'number' || item.qty < 1) item.qty = 1;
+      });
+      this.syncSelectedProducts();
+    }
+    console.log(this.cart);
   }
 
-  key(item: CartItem) { return item.id + ':' + (item.selectedSize || item.size); }
-  isSelected(item: CartItem) { return this.selection.has(this.key(item)); }
-  get total() { return this.selectedCartItems.reduce((sum, item) => sum + (item.price ?? 0) * (item.qty ?? 1), 0); }
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
+  }
 
-  toggle(item: CartItem, event: Event) {
-    if ((event.target as HTMLInputElement).checked) this.selection.add(this.key(item));
-    else this.selection.delete(this.key(item));
-    this.syncSelection();
+  goBack() {
+      this.router.navigate(['/home']);
+  }
+
+  goBuy(){
+    const selectedItems = this.selectedCartItems;
+
+    if (selectedItems.length === 0) {
+      this.notification.warning('Vui lòng chọn sản phẩm cần đặt hàng.');
+      return;
+    }
+
+    this.checkoutService.setProducts(selectedItems);
+    this.router.navigate(['/checkout']);
+  }
+
+  isSelected(product: any) {
+    return product?.id != null && this.selectedCartItemKeys.has(this.getCartItemKey(product));
+  }
+
+  isAllSelected() {
+    return this.cart.length > 0 && this.cart.every(item => this.isSelected(item));
+  }
+
+  toggleProduct(product: any, event: Event) {
+    if (!product || product.id == null) return;
+
+    const checked = (event.target as HTMLInputElement).checked;
+
+    if (checked) {
+      this.selectedCartItemKeys.add(this.getCartItemKey(product));
+    } else {
+      this.selectedCartItemKeys.delete(this.getCartItemKey(product));
+    }
+
+    this.updateSelectedCartItems();
   }
 
   toggleAll(event: Event) {
-    this.selection.clear();
-    if ((event.target as HTMLInputElement).checked) this.cart.forEach(item => this.selection.add(this.key(item)));
-    this.syncSelection();
+    const checked = (event.target as HTMLInputElement).checked;
+
+    if (checked) {
+      this.cart.forEach(item => {
+        if (item?.id != null) {
+          this.selectedCartItemKeys.add(this.getCartItemKey(item));
+        }
+      });
+      this.updateSelectedCartItems();
+      return;
+    }
+
+    this.selectedCartItemKeys.clear();
+    this.updateSelectedCartItems();
   }
 
-  changeQuantity(item: CartItem, delta: number) {
-    this.run(this.cartService.updateItemQuantity(item, (item.qty ?? 1) + delta));
+  /**
+   * Removes an item at index i from cart.
+   * Prefer calling service methods first (so service persists + emits).
+   * Only mutate local cart as fallback when service offers no API.
+   */
+  removeItem(index: number) {
+    if (index < 0 || index >= this.cart.length) return;
+    const item = this.cart[index];
+    if (item?.id != null) {
+      this.selectedCartItemKeys.delete(this.getCartItemKey(item));
+    }
+    const svc: any = this.cartService as any;
+
+    // 1) Prefer id-based removal if item has id and service supports it
+    if (item && item.id != null) {
+      if (typeof svc.removeItemById === 'function') {
+        try {
+          svc.removeItemById(item.id, this.getItemSize(item));
+          return;
+        } catch (e) {
+          // ignore and try next
+        }
+      }
+      // older naming possibilities
+      if (typeof svc.removeItem === 'function') {
+        try { svc.removeItem(item.id ?? item, this.getItemSize(item)); return; } catch {}
+      }
+      if (typeof svc.removeCartItem === 'function') {
+        try { svc.removeCartItem(item.id ?? item); return; } catch {}
+      }
+    }
+
+    // 2) Try index-based removal on service
+    if (typeof svc.removeItemByIndex === 'function') {
+      try { svc.removeItemByIndex(index); return; } catch {}
+    }
+
+    // 3) As a last resort, try to set whole cart via API (component builds new array without the item)
+    if (typeof svc.setCartItems === 'function') {
+      try {
+        const newCart = this.cart.slice();
+        newCart.splice(index, 1); // create new array then pass to service
+        svc.setCartItems(newCart);
+        return;
+      } catch {}
+    }
+
+    // 4) Fallback: mutate local and try persist via persistCart()
+    // (We avoid mutating before calling service in earlier steps; this is only fallback.)
+    this.cart.splice(index, 1);
+    this.persistCart();
   }
 
-  remove(item: CartItem) {
-    this.run(this.cartService.removeItem(item));
+  /**
+   * Change quantity for item at index by delta (+1 or -1).
+   * Prefer calling service.updateItemQuantity(id, qty) if available.
+   */
+  changeQuantity(index: number, delta: number) {
+    if (index < 0 || index >= this.cart.length) return;
+    const item = this.cart[index];
+    const currentQty = (item.qty && item.qty > 0) ? item.qty : 1;
+    const newQty = currentQty + delta;
+    if (newQty < 1) {
+      // if decreasing below 1, treat as remove
+      this.removeItem(index);
+      return;
+    }
+
+    const svc: any = this.cartService as any;
+    if (item && item.id != null && typeof svc.updateItemQuantity === 'function') {
+      try {
+        svc.updateItemQuantity(item.id, this.getItemSize(item), newQty);
+        return;
+      } catch {}
+    }
+
+    // fallback: if service exposes generic updateCart/setCartItems, rebuild and persist
+    if (typeof svc.setCartItems === 'function') {
+      const newCart = this.cart.map((it, idx) => idx === index ? { ...it, qty: newQty } : it);
+      try {
+        svc.setCartItems(newCart);
+        return;
+      } catch {}
+    }
+
+    // last fallback: update local copy and persist
+    this.cart[index] = { ...item, qty: newQty };
+    this.persistCart();
   }
 
-  goBuy() {
-    if (this.updating || !this.selectedCartItems.length) return;
-    this.checkout.setProducts(this.selectedCartItems);
-    void this.router.navigate(['/checkout']);
+  /**
+   * Compute total (considering qty)
+   */
+  getTotalPrice() {
+    return this.selectedCartItems.reduce((sum: number, item: any) => {
+      const qty = item.qty && item.qty > 0 ? item.qty : 1;
+      const price = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+      return sum + price * qty;
+    }, 0);
   }
 
-  private syncSelection() {
+  private syncSelectedProducts() {
+    const availableKeys = new Set(this.cart.filter(item => item?.id != null).map(item => this.getCartItemKey(item)));
+
+    this.selectedCartItemKeys.forEach(key => {
+      if (!availableKeys.has(key)) {
+        this.selectedCartItemKeys.delete(key);
+      }
+    });
+
+    this.updateSelectedCartItems();
+  }
+
+  private updateSelectedCartItems() {
     this.selectedCartItems = this.cart.filter(item => this.isSelected(item));
   }
 
-  private run(operation: Observable<void>) {
-    if (this.updating) return;
-    this.updating = true;
-    operation.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => { this.updating = false; })).subscribe({
-      error: error => this.notification.error(error?.error?.error || error?.message || 'Không thể cập nhật giỏ hàng.'),
-    });
+  getItemSize(item: any) {
+    return String(item?.selectedSize || item?.size || '').trim();
+  }
+
+  private getCartItemKey(item: any) {
+    return `${item.id}::${this.getItemSize(item)}`;
+  }
+
+  /**
+   * Persist cart to service if the service provides a setter/save function.
+   * Tries common function names; otherwise tries to assign svc.cart = this.cart.
+   */
+  private persistCart() {
+    const svc: any = this.cartService as any;
+    const candidateFns = ['setCartItems', 'saveCart', 'updateCart', 'setCart', 'persistCart', 'setItems'];
+    for (const fn of candidateFns) {
+      if (typeof svc[fn] === 'function') {
+        try {
+          svc[fn](this.cart);
+          return;
+        } catch (e) {
+          // ignore and try next
+        }
+      }
+    }
+
+    // fallback: if the service stores cart in a property, try to set it
+    try {
+      if ('cart' in svc) {
+        svc.cart = this.cart;
+        // if service provides a public save method name we didn't detect, try to call it:
+        if (typeof svc.save === 'function') {
+          try { svc.save(); } catch {}
+        }
+      }
+    } catch {}
   }
 }

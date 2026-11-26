@@ -1,18 +1,62 @@
-<main>
-  <section class="mx-auto grid max-w-7xl items-center gap-6 px-4 pb-7 pt-6 sm:px-8 md:grid-cols-[0.8fr_1.2fr] md:gap-10 md:py-10">
-    <div class="order-2 md:order-1">
-      <h1 class="max-w-[14ch] text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">Bộ sưu tập Zamy</h1>
-      <a routerLink="/sale" class="store-button mt-5">Khám phá sản phẩm</a>
+<app-navbar></app-navbar>
+
+<!-- TITLE -->
+<div
+  class="home-collection bg-[#F7EBE4] text-center
+         text-[22px] sm:text-[28px] md:text-[40px]
+         text-[#8A5252] font-semibold px-4 pt-6 pb-3 md:py-4">
+  BỘ SƯU TẬP
+</div>
+
+<!-- ===== MOBILE SLIDER ===== -->
+<div class="bg-[#F7EBE4] md:hidden px-4 pb-0 overflow-hidden">
+  <div
+    #bannerCarousel
+    class="collection-carousel flex overflow-x-auto scroll-smooth
+           snap-x snap-mandatory
+"
+    (scroll)="onBannerScroll()"
+    (pointerdown)="pauseBannerAutoplay()"
+    (pointerup)="resumeBannerAutoplay()"
+    (pointercancel)="resumeBannerAutoplay()">
+
+    <div *ngFor="let banner of banners" class="min-w-full snap-center">
+      <img
+        [src]="banner"
+        class="w-full aspect-[16/7] object-cover object-center rounded-md"
+      />
     </div>
-    <picture class="order-1 overflow-hidden rounded-2xl bg-[#ede0d6] md:order-2">
-      <source type="image/webp" srcset="/assets/optimized/hero-720.webp 720w, /assets/optimized/hero-1440.webp 1440w" sizes="(min-width: 768px) 56vw, 95vw">
-      <img src="/assets/img/banner1.png" alt="Bộ sưu tập thời trang Zamy" width="1440" height="630" fetchpriority="high" class="aspect-[16/7] w-full object-cover">
-    </picture>
-  </section>
-  <nav aria-label="Danh mục sản phẩm" class="mx-auto mb-5 grid max-w-7xl grid-cols-2 gap-3 px-4 sm:grid-cols-4 sm:px-8">
-    @for (category of categories; track category.path) {
-      <a [routerLink]="category.path" class="store-button-outline bg-white">{{ category.name }}</a>
-    }
-  </nav>
-  <app-highlight-products></app-highlight-products>
-</main>
+  </div>
+
+  <div class="mt-2 flex justify-center gap-2" aria-label="Chọn banner">
+    <button
+      *ngFor="let banner of banners; index as index"
+      type="button"
+      [attr.aria-label]="'Xem banner ' + (index + 1)"
+      [attr.aria-current]="bannerIndex === index ? 'true' : null"
+      (click)="goToBanner(index)"
+      class="h-1.5 w-1.5 rounded-full bg-[#8A5252] transition-opacity duration-300"
+      [class.opacity-100]="bannerIndex === index"
+      [class.opacity-30]="bannerIndex !== index">
+    </button>
+  </div>
+</div>
+
+
+<!-- ===== DESKTOP / TABLET GRID ===== -->
+<div class="bg-[#F7EBE4] hidden md:block px-6 md:px-10 lg:px-16 pb-6">
+  <div
+    class="grid grid-cols-2 gap-6 mx-auto">
+
+    <img src="/assets/img/banner1.png" class="object-cover hover:scale-105 transition duration-300 rounded-lg">
+    <img src="/assets/img/banner2.png" class="object-cover hover:scale-105 transition duration-300 rounded-lg">
+    <img src="/assets/img/banner3.png" class="object-cover hover:scale-105 transition duration-300 rounded-lg">
+    <img src="/assets/img/banner4.png" class="object-cover hover:scale-105 transition duration-300 rounded-lg">
+
+  </div>
+</div>
+
+<!-- PRODUCTS -->
+<app-highlight-products></app-highlight-products>
+
+<app-footer></app-footer>

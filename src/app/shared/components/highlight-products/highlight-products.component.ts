@@ -1,31 +1,63 @@
-import { Component, DestroyRef, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Product, ProductService } from '../../../features/services/product.service';
-import { ProductCardComponent } from '../product-card/product-card.component';
-import { ProductLoadingStateComponent } from '../product-loading-state/product-loading-state.component';
+import { Component, ElementRef, ViewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { ProductService } from '../../../features/services/product.service';
 
 @Component({
   selector: 'app-highlight-products',
-  imports: [RouterLink, ProductCardComponent, ProductLoadingStateComponent],
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   templateUrl: './highlight-products.component.html',
+  styleUrl: './highlight-products.component.scss'
 })
 export class HighlightProductsComponent {
-  private readonly products = inject(ProductService);
-  private readonly destroyRef = inject(DestroyRef);
-  items: Product[] = [];
+  product: any[] = [];
   loading = true;
-  error: string | null = null;
+  errorMessage: string | null = null;
 
-  ngOnInit() { this.load(); }
+  constructor(private productService: ProductService) {}
+  ngOnInit() { this.loadProducts(); }
 
-  load(retry = false) {
+  loadProducts(): void {
     this.loading = true;
-    this.error = null;
-    const request = retry ? this.products.refreshProducts() : this.products.getAllProducts();
-    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: products => { this.items = products.slice(0, 4); this.loading = false; },
-      error: () => { this.error = 'Không thể tải sản phẩm. Vui lòng thử lại.'; this.loading = false; },
+    this.errorMessage = null;
+    this.productService.getAllProducts().subscribe({
+      next: (data) => {
+        this.product = data;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Lỗi khi lấy sản phẩm:', error);
+        this.errorMessage = this.messageFor(error);
+        this.loading = false;
+      }
+    });
+  }
+
+  retry(): void { this.productService.invalidateProducts(); this.loadProducts(); }
+
+  private messageFor(error: unknown): string {
+    if (error instanceof HttpErrorResponse && error.error?.code === 'OFFLINE') return 'Bạn đang ngoại tuyến. Vui lòng kiểm tra kết nối mạng.';
+    return 'Không thể tải sản phẩm. Vui lòng thử lại.';
+  }
+  @ViewChild('carousel') carousel?: ElementRef<HTMLElement>;
+
+  scrollLeft() {
+    this.scrollCarousel(-1);
+  }
+
+  scrollRight() {
+    this.scrollCarousel(1);
+  }
+
+  private scrollCarousel(direction: 1 | -1): void {
+    const carousel = this.carousel?.nativeElement;
+    if (!carousel) return;
+
+    carousel.scrollBy({
+      left: direction * carousel.clientWidth * 0.8,
+      behavior: 'smooth'
     });
   }
 }
