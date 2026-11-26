@@ -29,6 +29,12 @@ function createVnpayPaymentUrl(order, ipAddr) {
   const tmnCode = process.env.VNPAY_TMN_CODE;
   const secretKey = process.env.VNPAY_HASH_SECRET;
   const returnUrl = process.env.VNPAY_RETURN_URL;
+  if (!tmnCode?.trim() || !secretKey?.trim()) throw new Error('VNPay credentials are missing');
+  const validProtocols = ['http:', 'https:'];
+  if (!validProtocols.includes(new URL(vnpUrl).protocol) ||
+      !validProtocols.includes(new URL(returnUrl).protocol)) {
+    throw new Error('Invalid VNPay URL');
+  }
 
   let vnpParams = {
     vnp_Version: '2.1.0',
@@ -42,7 +48,7 @@ function createVnpayPaymentUrl(order, ipAddr) {
     vnp_Locale: 'vn',
     vnp_ReturnUrl: returnUrl,
     vnp_IpAddr: ipAddr || '127.0.0.1',
-    vnp_CreateDate: formatDate(new Date()),
+    vnp_CreateDate: formatDate(new Date(order.createdAt)),
   };
 
   vnpParams = sortObject(vnpParams);

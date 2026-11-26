@@ -1,13 +1,18 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const morgan = require('morgan');
 const authRoutes = require('./routes/auth.routes');
 const routes = require("./routes");
 const prisma = require('./lib/prisma');
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
+const { sanitizeLogMessage } = require('./utils/sanitizeLogMessage');
 
 const app = express();
+// Render forwards requests through one proxy before they reach this Express app.
+// Trusting exactly that hop lets rate limiters use the forwarded client IP.
+app.set('trust proxy', 1);
 const configuredOrigins = (process.env.CORS_ORIGINS || '')
     .split(',')
     .map((origin) => origin.trim())
@@ -17,6 +22,7 @@ const developmentOrigins = process.env.NODE_ENV === 'production'
     : ['http://localhost:4200', 'http://127.0.0.1:4200'];
 const allowedOrigins = new Set([...developmentOrigins, ...configuredOrigins]);
 
+app.use(helmet());
 app.use(cors({
     origin(origin, callback) {
         if (!origin || allowedOrigins.has(origin)) return callback(null, true);
@@ -41,13 +47,20 @@ app.get('/health', (req, res) => {
 
 app.get('/ready', async (req, res) => {
     try {
-        await prisma.$queryRaw`SELECT 1`;
+        // Check that checkout migrations are present without fetching any order data.
+        await prisma.$queryRaw`SELECT idempotency_key, request_hash FROM orders LIMIT 0`;
         return res.status(200).json({
             status: 'ready',
             database: 'ok',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            ...(process.env.RENDER_GIT_COMMIT ? { commit: process.env.RENDER_GIT_COMMIT } : {}),
         });
-    } catch {
+    } catch (error) {
+        console.warn('Database readiness check failed', {
+            errorName: error?.name || 'Error',
+            errorMessage: sanitizeLogMessage(error?.message),
+            ...(error?.code ? { errorCode: error.code } : {}),
+        });
         return res.status(503).json({
             status: 'not_ready',
             database: 'unavailable'

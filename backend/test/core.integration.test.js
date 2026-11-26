@@ -229,12 +229,89 @@ test('COD checkout persists snapshots, enforces ownership, and rolls back insuff
   }
 });
 
+test('concurrent checkout retries reuse one order and reject changed payloads', async () => {
+  const email = nextEmail('checkout-retry');
+  let picked;
+  try {
+    const customer = await registerCustomer(email);
+    picked = await pickVariant();
+    const payload = {
+      customer: { name: 'Checkout Retry', phone: '0900000000', email, address: 'Core Test Street' },
+      items: [{ productId: picked.product.id, size: picked.apiVariant.size, qty: 1 }],
+    };
+    const headers = { ...authHeaders(customer.token), 'Idempotency-Key': 'same-checkout' };
+    const submit = (body) => request('/orders', { method: 'POST', headers, body: JSON.stringify(body) });
+    const responses = await Promise.all([submit(payload), submit(payload)]);
+    assert.deepEqual(responses.map(({ status }) => status).sort(), [200, 201]);
+    assert.equal(responses[0].body.data.orderCode, responses[1].body.data.orderCode);
+
+    const changed = await submit({ ...payload, customer: { ...payload.customer, address: 'Other street' } });
+    assert.equal(changed.status, 409);
+    assert.equal(await prisma.order.count({ where: { userId: customer.user.id } }), 1);
+    const variant = await prisma.productVariant.findUniqueOrThrow({ where: { id: picked.variant.id } });
+    assert.equal(variant.stockQuantity, picked.stockBefore - 1);
+  } finally {
+    await cleanup({ emails: [email], variantId: picked?.variant.id, stockBefore: picked?.stockBefore });
+  }
+});
+
+test('VNPay URL failure rolls back checkout and the same request can retry', async () => {
+  const email = nextEmail('vnpay');
+  const keys = ['VNPAY_HASH_SECRET', 'VNPAY_TMN_CODE', 'VNPAY_PAYMENT_URL', 'VNPAY_RETURN_URL'];
+  const original = keys.map((key) => process.env[key]);
+  let picked;
+  try {
+    const customer = await registerCustomer(email);
+    picked = await pickVariant();
+    const choice = { productId: picked.product.id, size: picked.apiVariant.size, quantity: 1 };
+    const cart = await request('/cart/items', { method: 'POST', headers: authHeaders(customer.token), body: JSON.stringify(choice) });
+    assert.equal(cart.status, 200);
+    const headers = { ...authHeaders(customer.token), 'Idempotency-Key': 'same-vnpay-checkout' };
+    const body = JSON.stringify({
+      customer: { name: 'VNPay Retry', phone: '0900000000', email, address: 'Core Test Street' },
+      paymentMethod: 'vnpay',
+      items: [choice],
+    });
+    const submit = () => request('/orders', { method: 'POST', headers, body });
+
+    delete process.env.VNPAY_HASH_SECRET;
+    const failed = await submit();
+    assert.equal(failed.status, 503);
+    assert.equal(await prisma.order.count({ where: { userId: customer.user.id } }), 0);
+    const variant = await prisma.productVariant.findUniqueOrThrow({ where: { id: picked.variant.id } });
+    assert.equal(variant.stockQuantity, picked.stockBefore);
+    const cartAfter = await request('/cart', { headers: authHeaders(customer.token) });
+    assert.deepEqual(cartAfter.body.data.items, cart.body.data.items);
+
+    Object.assign(process.env, {
+      VNPAY_HASH_SECRET: 'local-test-only',
+      VNPAY_TMN_CODE: 'TESTCODE',
+      VNPAY_PAYMENT_URL: 'https://payments.example.test/pay',
+      VNPAY_RETURN_URL: 'http://localhost:3000/orders/vnpay-return',
+    });
+    const created = await submit();
+    assert.equal(created.status, 201);
+    assert.equal(new URL(created.body.paymentUrl).origin, 'https://payments.example.test');
+    const replay = await submit();
+    assert.equal(replay.status, 200);
+    assert.equal(replay.body.data.orderCode, created.body.data.orderCode);
+    assert.equal(replay.body.paymentUrl, created.body.paymentUrl);
+  } finally {
+    keys.forEach((key, index) => {
+      if (original[index] === undefined) delete process.env[key];
+      else process.env[key] = original[index];
+    });
+    await cleanup({ emails: [email], variantId: picked?.variant.id, stockBefore: picked?.stockBefore });
+  }
+});
+
 test('admin authentication is DB-only and admin middleware enforces roles', async () => {
   const customerEmail = nextEmail('admin-customer');
   const adminEmail = nextEmail('admin');
   const legacyEmail = nextEmail('legacy-env');
   const originalLegacyEmail = process.env.ADMIN_EMAIL;
   const originalLegacyPassword = process.env.ADMIN_PASSWORD;
+  const productCode = `AUDIT-${runPrefix.toUpperCase()}`;
   try {
     const customer = await registerCustomer(customerEmail);
     const customerAdminLogin = await request('/auth/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: customerEmail, password }) });
@@ -254,6 +331,16 @@ test('admin authentication is DB-only and admin middleware enforces roles', asyn
     const customerProtected = await request('/products', { method: 'POST', headers: authHeaders(customer.token), body: JSON.stringify({}) });
     assert.equal(customerProtected.status, 403);
 
+    const created = await request('/products', {
+      method: 'POST',
+      headers: authHeaders(adminLogin.body.token),
+      body: JSON.stringify({
+        code: productCode, name: 'Test product', category: 'dress', price: 100000,
+        color: 'Black', image: '/assets/img/dress1.png', variants: [{ size: 'M', stock: 1 }],
+      }),
+    });
+    assert.equal(created.status, 201, 'a new product must receive an unused ID after seeding');
+
     process.env.ADMIN_EMAIL = legacyEmail;
     process.env.ADMIN_PASSWORD = password;
     const legacyFallback = await request('/auth/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: legacyEmail, password }) });
@@ -262,5 +349,7 @@ test('admin authentication is DB-only and admin middleware enforces roles', asyn
     if (originalLegacyEmail === undefined) delete process.env.ADMIN_EMAIL; else process.env.ADMIN_EMAIL = originalLegacyEmail;
     if (originalLegacyPassword === undefined) delete process.env.ADMIN_PASSWORD; else process.env.ADMIN_PASSWORD = originalLegacyPassword;
     await cleanup({ emails: [customerEmail, adminEmail] });
+    await prisma.productVariant.deleteMany({ where: { product: { code: productCode } } });
+    await prisma.product.deleteMany({ where: { code: productCode } });
   }
 });

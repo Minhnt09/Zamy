@@ -25,12 +25,13 @@
       <app-product-loading-state
         [loading]="loading"
         [hasData]="product.length > 0"
+        emptyMessage="Danh mục này chưa có sản phẩm."
         [errorMessage]="errorMessage"
         (retryRequested)="retry()"
       ></app-product-loading-state>
       <div *ngIf="product.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
         <app-product-card
-          *ngFor="let item of product | slice:11:15"
+          *ngFor="let item of product"
           [product]="item"
         ></app-product-card>
       </div>

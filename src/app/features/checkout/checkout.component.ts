@@ -9,7 +9,9 @@ import { CartservicesService } from '../services/cartservices.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { CheckoutService } from '../services/checkout.service';
-import { OrderService } from '../services/order.service';
+import { CreateOrderPayload, OrderService } from '../services/order.service';
+import { firstValueFrom } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-checkout',
@@ -35,6 +37,7 @@ export class CheckoutComponent {
   isCountdownEnd = false;
   isShowBack = false;
   isSubmitting = false;
+  submittedOrderCode = '';
   submitError = '';
   shippingFee = 20000;
   cashOnDeliveryOrderCode = '';
@@ -96,7 +99,7 @@ export class CheckoutComponent {
   get province() { return this.form.get('province'); }
   get district() { return this.form.get('district'); }
   get address() { return this.form.get('address'); }
-  private buildOrderPayload() {
+  private buildOrderPayload(): CreateOrderPayload {
     const v = this.form.value;
 
     return {
@@ -117,6 +120,7 @@ export class CheckoutComponent {
   }
 
   async onSubmit() {
+    if (this.isSubmitting || this.submittedOrderCode) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -127,30 +131,33 @@ export class CheckoutComponent {
     }
     const payload = this.buildOrderPayload();
     this.isSubmitting = true;
+    this.submitError = '';
+    try {
+      const response = await firstValueFrom(this.orderService.createOrder(payload));
+      this.submittedOrderCode = response.data.orderCode;
+      this.cartService.refreshCart();
 
-    this.orderService.createOrder(payload).subscribe({
-      next: (res: any) => {
-        this.isSubmitting = false;
-        this.submitError = '';
-
-        const paymentUrl = res?.paymentUrl || res?.data?.paymentUrl;
-        const orderCode = res?.data?.orderCode || res?.orderCode;
-
-        this.cartService.clearCart();
-
-        if (paymentUrl) {
-          window.location.href = paymentUrl;
-          return;
+      if (payload.paymentMethod === 'vnpay') {
+        if (response.paymentUrl) {
+          window.location.assign(response.paymentUrl);
+        } else if (response.paymentWarning) {
+          this.submitError = response.paymentWarning;
+        } else {
+          void this.router.navigate(['/payment-success'], {
+            queryParams: { orderCode: this.submittedOrderCode }
+          });
         }
-
-        this.showCashOnDeliverySuccess(orderCode);
-        console.log('POST /orders response', res);
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        this.submitError = err?.error?.error || 'Không thể tạo đơn hàng. Vui lòng thử lại.';
+        return;
       }
-    });
+
+      this.showCashOnDeliverySuccess(this.submittedOrderCode);
+    } catch (error) {
+      this.submitError = error instanceof HttpErrorResponse
+        ? error.error?.error || 'Không thể tạo đơn hàng. Vui lòng thử lại.'
+        : 'Không thể tạo đơn hàng. Vui lòng thử lại.';
+    } finally {
+      this.isSubmitting = false;
+    }
   }
 
   goBack() {
