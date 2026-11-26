@@ -6,6 +6,10 @@
   </div>
 </section>
 
+<p *ngIf="!loading && !hasData && !errorMessage && emptyMessage" class="text-center text-[#8A5252]" role="status">
+  {{ emptyMessage }}
+</p>
+
 <section *ngIf="!loading && !hasData && errorMessage" class="rounded-lg border border-[#d8bbb0] bg-white p-6 text-center" role="alert">
   <p class="text-[#8A5252]">{{ errorMessage }}</p>
   <button type="button" (click)="retryRequested.emit()" class="mt-4 rounded-md bg-[#8A5252] px-4 py-2 font-medium text-white">Thử lại</button>

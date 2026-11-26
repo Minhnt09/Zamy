@@ -13,6 +13,7 @@ export interface Product {
   sizes?: string[];
   stock?: number;
   code?: string;
+  category?: string;
 }
 
 interface ApiResponse<T> { data: T; }

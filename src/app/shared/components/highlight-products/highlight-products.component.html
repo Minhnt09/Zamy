@@ -44,6 +44,9 @@
     <p class="text-[#8A5252]">{{ errorMessage }}</p>
     <button type="button" (click)="retry()" class="mt-4 rounded-md bg-[#8A5252] px-4 py-2 font-medium text-white">Thử lại</button>
   </section>
+  <p *ngIf="!loading && !errorMessage && product.length === 0" class="text-center text-[#8A5252]" role="status">
+    Hiện chưa có sản phẩm.
+  </p>
   <div
     #carousel
     *ngIf="!loading && product.length"

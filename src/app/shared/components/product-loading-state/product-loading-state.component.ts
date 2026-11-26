@@ -11,5 +11,6 @@ export class ProductLoadingStateComponent {
   @Input() loading = false;
   @Input() hasData = false;
   @Input() errorMessage: string | null = null;
+  @Input() emptyMessage: string | null = null;
   @Output() retryRequested = new EventEmitter<void>();
 }

@@ -199,12 +199,12 @@ export class CartservicesService {
       },
       error: error => {
         console.warn('Không thể merge guest cart; giữ lại localStorage để thử lại:', error);
-        this.loadDatabaseCart();
+        this.refreshCart();
       },
     });
   }
 
-  private loadDatabaseCart() {
+  refreshCart() {
     if (!this.isLoggedIn()) return;
     this.http.get<CartApiResponse>(this.api, this.authOptions()).subscribe({
       next: response => this.setDatabaseCart(response.data),

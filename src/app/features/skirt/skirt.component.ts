@@ -5,7 +5,7 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 import { ProductFilterComponent } from '../../shared/components/product-filter/product-filter.component';
 import { HighlightProductsComponent } from '../../shared/components/highlight-products/highlight-products.component';
 import { ProductCardComponent } from '../../shared/components/product-card/product-card.component';
-import { ProductService } from '../services/product.service';
+import { Product, ProductService } from '../services/product.service';
 import { ProductLoadingStateComponent } from '../../shared/components/product-loading-state/product-loading-state.component';
 
 @Component({
@@ -23,7 +23,7 @@ import { ProductLoadingStateComponent } from '../../shared/components/product-lo
   styleUrl: './skirt.component.scss'
 })
 export class SkirtComponent {
-  product: any[] = [];
+  product: Product[] = [];
   loading = true;
   errorMessage: string | null = null;
   
@@ -35,7 +35,7 @@ export class SkirtComponent {
     this.errorMessage = null;
     this.productService.getAllProducts().subscribe({
       next: (data) => {
-        this.product = data;
+        this.product = data.filter((product) => product.category === 'skirt');
         this.loading = false;
       },
       error: () => {

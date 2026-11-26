@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const { Prisma } = require('@prisma/client');
 const prisma = require('../lib/prisma');
+const { createVnpayPaymentUrl } = require('./vnpay.service');
+const { TIMEOUT_MS } = require('./vnpay-timeout.service');
 
 const SHIPPING_FEE = 20000;
 const transitions = { PENDING: ['CONFIRMED', 'CANCELLED'], CONFIRMED: ['SHIPPING', 'CANCELLED'], SHIPPING: ['COMPLETED'] };
@@ -37,10 +39,47 @@ function mapOrder(order) {
 const includeOrder = { items: { include: { productVariant: { select: { productId: true } } } }, payments: { orderBy: { id: 'asc' } } };
 function errorResult(error) { if (error instanceof OrderInputError) return { status: error.status, error: error.message }; if (error?.code === 'P2002') return { status: 409, error: 'Không thể tạo order code, vui lòng thử lại' }; return { status: 500, error: 'Không thể xử lý đơn hàng' }; }
 
-async function createOrder(payload, userId) {
+function checkoutResult(order, status, ipAddress) {
+  const data = mapOrder(order);
+  const canPay = data.payment?.provider === 'vnpay' &&
+    data.payment.status === 'pending' && order.status === 'PENDING' &&
+    Date.now() - order.payments[0].createdAt.getTime() < TIMEOUT_MS;
+  if (!canPay) return { status, data };
+
+  try {
+    return { status, data, paymentUrl: createVnpayPaymentUrl(data, ipAddress) };
+  } catch {
+    throw new OrderInputError(503, 'Chưa thể kết nối VNPay. Vui lòng thử lại sau.');
+  }
+}
+
+async function createOrder(payload, userId, { idempotencyKey, ipAddress } = {}) {
   try {
     const input = normalizePayload(payload);
-    const order = await prisma.$transaction(async (tx) => {
+    if (idempotencyKey !== undefined && !/^[A-Za-z0-9_-]{1,128}$/.test(idempotencyKey)) {
+      throw new OrderInputError(400, 'Idempotency-Key không hợp lệ');
+    }
+    input.items.sort((left, right) => left.productId - right.productId || left.size.localeCompare(right.size));
+    const requestHash = idempotencyKey
+      ? crypto.createHash('sha256').update(JSON.stringify(input)).digest('hex')
+      : null;
+
+    return await prisma.$transaction(async (tx) => {
+      if (idempotencyKey) {
+        // Serialize retries for the same user and key before reserving inventory.
+        await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(${userId}::int, hashtext(${idempotencyKey}))`;
+        const existing = await tx.order.findUnique({
+          where: { userId_idempotencyKey: { userId, idempotencyKey } },
+          include: includeOrder,
+        });
+        if (existing) {
+          if (existing.requestHash !== requestHash) {
+            throw new OrderInputError(409, 'Mã yêu cầu này đã được dùng cho một đơn khác.');
+          }
+          return checkoutResult(existing, 200, ipAddress);
+        }
+      }
+
       const resolved = [];
       for (const item of input.items) {
         const variant = await tx.productVariant.findFirst({ where: { productId: item.productId, size: item.size, isActive: true, product: { isActive: true } }, include: { product: true } });
@@ -51,12 +90,12 @@ async function createOrder(payload, userId) {
       }
       const subtotal = resolved.reduce((sum, item) => sum + item.variant.product.price * item.quantity, 0);
       const orderCode = code();
-      const order = await tx.order.create({ data: { orderCode, userId, recipientName: input.recipientName, recipientPhone: input.recipientPhone, recipientEmail: input.recipientEmail, shippingAddress: input.shippingAddress, subtotal, shippingFee: SHIPPING_FEE, grandTotal: subtotal + SHIPPING_FEE, status: 'PENDING', items: { create: resolved.map((item) => ({ productVariantId: item.variant.id, productName: item.variant.product.name, variantSku: item.variant.sku, size: item.variant.size, unitPrice: item.variant.product.price, quantity: item.quantity, lineTotal: item.variant.product.price * item.quantity })) }, payments: { create: { provider: input.provider, amount: subtotal + SHIPPING_FEE, status: 'PENDING', transactionRef: `${orderCode}-PAY` } } }, include: includeOrder });
+      const order = await tx.order.create({ data: { orderCode, userId, idempotencyKey, requestHash, recipientName: input.recipientName, recipientPhone: input.recipientPhone, recipientEmail: input.recipientEmail, shippingAddress: input.shippingAddress, subtotal, shippingFee: SHIPPING_FEE, grandTotal: subtotal + SHIPPING_FEE, status: 'PENDING', items: { create: resolved.map((item) => ({ productVariantId: item.variant.id, productName: item.variant.product.name, variantSku: item.variant.sku, size: item.variant.size, unitPrice: item.variant.product.price, quantity: item.quantity, lineTotal: item.variant.product.price * item.quantity })) }, payments: { create: { provider: input.provider, amount: subtotal + SHIPPING_FEE, status: 'PENDING', transactionRef: `${orderCode}-PAY` } } }, include: includeOrder });
+      const result = checkoutResult(order, 201, ipAddress);
       const cart = await tx.cart.findUnique({ where: { userId } });
       if (cart) await tx.cartItem.deleteMany({ where: { cartId: cart.id, productVariantId: { in: resolved.map((item) => item.variant.id) } } });
-      return order;
+      return result;
     });
-    return { status: 201, data: mapOrder(order) };
   } catch (error) { return errorResult(error); }
 }
 

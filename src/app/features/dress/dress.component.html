@@ -41,6 +41,7 @@
       <app-product-loading-state
         [loading]="loading"
         [hasData]="product.length > 0"
+        emptyMessage="Danh mục này chưa có sản phẩm."
         [errorMessage]="errorMessage"
         (retryRequested)="retry()"
       ></app-product-loading-state>
@@ -50,7 +51,7 @@
                gap-5 sm:gap-6 lg:gap-10"
       >
         <app-product-card
-          *ngFor="let item of product | slice:6:10"
+          *ngFor="let item of product"
           [product]="item"
         >
         </app-product-card>

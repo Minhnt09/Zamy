@@ -9,8 +9,9 @@ const {
   vnpayReturn,
 } = require('../controllers/order.controller');
 const { requireAuth, verifyAdmin } = require('../middlewares/auth.middleware');
+const { checkoutLimiter } = require('../middlewares/rateLimiters');
 
-router.post('/', requireAuth, createOrder);
+router.post('/', checkoutLimiter, requireAuth, createOrder);
 router.get('/vnpay-return', vnpayReturn);          
 router.get('/:code', requireAuth, getOrderByCode);
 router.get('/', verifyAdmin, getAllOrders);

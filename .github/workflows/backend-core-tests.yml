@@ -60,6 +60,12 @@ jobs:
       - name: Run core integration tests
         run: npm run test:core
 
+      - name: Run observability integration tests
+        run: npm run test:observability
+
+      - name: Run production hardening tests
+        run: npm run test:hardening
+
   deploy-backend:
     name: Deploy backend to Render
     needs: core-tests
@@ -75,15 +81,21 @@ jobs:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
 
-      - name: Verify deployed backend health
+      - name: Verify deployed commit, database and product catalog
         env:
           RENDER_BACKEND_URL: ${{ vars.RENDER_BACKEND_URL }}
         run: |
           test -n "$RENDER_BACKEND_URL"
+          base_url="${RENDER_BACKEND_URL%/}"
           for attempt in {1..18}; do
-            if curl --fail --silent --show-error "$RENDER_BACKEND_URL/health"; then
+            if curl --fail --silent --show-error --max-time 20 "$base_url/ready" |
+                jq --exit-status --arg commit "$GITHUB_SHA" '.status == "ready" and .database == "ok" and .commit == $commit' >/dev/null &&
+              curl --fail --silent --show-error --max-time 20 "$base_url/products" |
+                jq --exit-status '.data | type == "array" and length > 0' >/dev/null; then
+              echo "Commit $GITHUB_SHA is live and the catalog contains products."
               exit 0
             fi
             sleep 10
           done
+          echo "::error::The expected commit is not live with a ready database and a populated catalog."
           exit 1

@@ -160,13 +160,16 @@
 
           <button
             type="submit"
-            [disabled]="isSubmitting"
+            [disabled]="isSubmitting || !!submittedOrderCode"
             class="mt-4 w-full bg-[#AE8989] text-white py-3 rounded-full text-lg font-semibold disabled:cursor-not-allowed disabled:opacity-60">
             {{ isSubmitting ? 'Đang xử lý...' : 'Thanh toán ngay' }}
           </button>
 
-          <div *ngIf="submitError" class="mt-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+          <div *ngIf="submitError" class="mt-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
             {{ submitError }}
+            <a *ngIf="submittedOrderCode" routerLink="/payment-success" [queryParams]="{ orderCode: submittedOrderCode }" class="underline">
+              Xem trạng thái đơn {{ submittedOrderCode }}
+            </a>
           </div>
         </div>
       </div>

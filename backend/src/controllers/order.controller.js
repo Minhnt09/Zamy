@@ -1,7 +1,14 @@
 const orderService = require('../services/order.service');
-const { createVnpayPaymentUrl, verifyVnpaySignature } = require('../services/vnpay.service');
+const { verifyVnpaySignature } = require('../services/vnpay.service');
 const isAdmin = (user) => user?.role === 'admin' || user?.role === 'ADMIN';
-const createOrder = async (req, res) => { const result = await orderService.createOrder(req.body, req.user.id); if (result.error) return res.status(result.status || 400).json({ error: result.error }); const response = { message: 'Đặt hàng thành công', data: result.data }; if (String(req.body.paymentMethod || '').toLowerCase() === 'vnpay') { try { response.paymentUrl = createVnpayPaymentUrl(result.data, req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1'); } catch { response.paymentWarning = 'Đơn hàng đã tạo, chưa thể tạo URL thanh toán.'; } } return res.status(201).json(response); };
+const createOrder = async (req, res) => {
+  const { status, data, error, paymentUrl } = await orderService.createOrder(req.body, req.user.id, {
+    idempotencyKey: req.get('Idempotency-Key'),
+    ipAddress: req.ip,
+  });
+  if (error) return res.status(status).json({ error });
+  return res.status(status).json({ message: 'Đặt hàng thành công', data, paymentUrl });
+};
 const getOrderByCode = async (req, res) => { const result = await orderService.getOrderByCode(req.params.code, req.user.id, isAdmin(req.user)); return result.error ? res.status(result.status || 400).json({ error: result.error }) : res.json({ data: result.data }); };
 const getAllOrders = async (req, res) => { const result = await orderService.getAllOrders(); return result.error ? res.status(result.status || 500).json({ error: result.error }) : res.json({ data: result.data }); };
 const updateOrderStatus = async (req, res) => { const result = await orderService.updateOrderStatus(req.params.code, req.body.status); return result.error ? res.status(result.status || 400).json({ error: result.error }) : res.json({ message: 'Cập nhật trạng thái thành công', data: result.data }); };

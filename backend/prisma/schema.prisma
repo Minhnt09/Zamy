@@ -122,6 +122,8 @@ model Order {
   id             Int         @id @default(autoincrement())
   orderCode      String      @unique @map("order_code")
   userId         Int         @map("user_id")
+  idempotencyKey String?     @map("idempotency_key") @db.VarChar(128)
+  requestHash    String?     @map("request_hash") @db.VarChar(64)
   recipientName  String      @map("recipient_name")
   recipientPhone String      @map("recipient_phone")
   recipientEmail String?     @map("recipient_email")
@@ -137,6 +139,7 @@ model Order {
   payments       Payment[]
 
   @@index([userId])
+  @@unique([userId, idempotencyKey])
   @@index([status])
   @@map("orders")
 }
